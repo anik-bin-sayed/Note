@@ -1,0 +1,129 @@
+import { FiArrowLeft, FiBookOpen } from "react-icons/fi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Header from "../components/Note/NoteDetails/Header";
+import Breadcrumb from "../components/Note/NoteDetails/Breadcrumb";
+
+import MetaInfo from "../components/Note/NoteDetails/MetaInfo";
+import LoadingNoteDetails from "../components/Note/NoteDetails/LoadingNoteDetails";
+import {
+  useDeleteEntryMutation,
+  useGetNoteDetailsQuery,
+} from "../lib/features/noteApi";
+
+import DOMPurify from "dompurify";
+
+const NoteDetails = () => {
+  const { id } = useParams();
+
+  const navigate = useNavigate();
+
+  const { data: note, isLoading } = useGetNoteDetailsQuery(id);
+  const [deleteEntry, { isLoading: deleting }] = useDeleteEntryMutation();
+
+  console.log(note);
+
+  const handleDeleteNote = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this entry?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteEntry(id);
+      navigate(-1);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-slate-50 text-slate-900">
+      {/* Header */}
+      <Header handleDeleteNote={handleDeleteNote} deleting={deleting} />
+      {/* Main Content */}
+
+      <section className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        {isLoading && <LoadingNoteDetails />}
+        {!isLoading && (
+          <>
+            {/* Breadcrumb */}
+            <Breadcrumb note={note} />
+            {/* Note Card */}
+            <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              {/* Note Header */}
+              <div className="border-b border-slate-100 px-6 py-7 sm:px-8 sm:py-8">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                      <FiBookOpen className="text-2xl" />
+                    </div>
+
+                    <div>
+                      <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                        {note?.title}
+                      </h1>
+
+                      <p className="mt-2 text-sm text-slate-500">
+                        Personal knowledge note
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meta Information */}
+                <MetaInfo note={note} />
+              </div>
+
+              {/* Note Content */}
+              <div className="px-6 py-8 sm:px-8 sm:py-10">
+                <div
+                  className="
+    prose
+    prose-slate
+    max-w-none
+
+    prose-headings:font-bold
+    prose-p:leading-7
+    prose-a:text-blue-600
+    prose-code:rounded
+    prose-code:bg-slate-100
+    prose-code:px-1
+    prose-code:py-0.5
+    prose-pre:rounded-xl
+    prose-blockquote:border-l-4
+    prose-blockquote:border-slate-300
+  "
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(note?.text),
+                  }}
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:px-8">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-slate-400">
+                    This note belongs to your personal knowledge base.
+                  </p>
+
+                  <Link
+                    to="/notes"
+                    className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+                  >
+                    <FiArrowLeft />
+                    All Notes
+                  </Link>
+                </div>
+              </div>
+            </article>
+          </>
+        )}
+      </section>
+    </main>
+  );
+};
+
+export default NoteDetails;
