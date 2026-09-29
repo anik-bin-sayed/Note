@@ -1,5 +1,8 @@
-import { FiBookOpen, FiEdit3, FiTrash2 } from "react-icons/fi";
+// react router
 import { Link } from "react-router-dom";
+
+// react icons
+import { FiBookOpen, FiEdit3, FiTrash2 } from "react-icons/fi";
 
 import DOMPurify from "dompurify";
 
@@ -46,7 +49,6 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
               <button
                 type="button"
                 aria-label={`Edit ${entry.title}`}
-                // onClick={() => handleEditNote(entry?.id)}
                 disabled={deleting}
                 className="
       shrink-0 cursor-pointer rounded-lg p-2

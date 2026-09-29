@@ -1,18 +1,24 @@
+// react router dom
+import { useSearchParams } from "react-router-dom";
+
+// react icons
 import { useMemo, useState } from "react";
 import { FiBookOpen, FiRefreshCw } from "react-icons/fi";
 
-import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import LoadingNote from "../components/Note/LoadingNote";
-import ListEntry from "../components/Note/ListEntry";
-import Pagination from "../components/Note/AllNotes/Pagination";
-import Empty from "../components/Note/Empty";
+// redux rtk query
 import {
   useDeleteEntryMutation,
   useGetAllNotesQuery,
 } from "../lib/features/noteApi";
-import { useSearchParams } from "react-router-dom";
+
+// local components
+import Navbar from "../components/Navbar";
+import Empty from "../components/Note/Empty";
+import { useAuth } from "../context/AuthContext";
+import ListEntry from "../components/Note/ListEntry";
 import Search from "../components/Note/AllNotes/Search";
+import LoadingNote from "../components/Note/LoadingNote";
+import Pagination from "../components/Note/AllNotes/Pagination";
 
 const Notes = () => {
   const { user, logout } = useAuth();

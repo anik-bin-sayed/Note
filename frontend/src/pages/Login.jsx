@@ -1,4 +1,7 @@
+// react
 import { useState } from "react";
+
+// react icons
 import { FcGoogle } from "react-icons/fc";
 import { FiFileText, FiShield } from "react-icons/fi";
 

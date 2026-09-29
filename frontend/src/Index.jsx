@@ -1,11 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+
 import Login from "./pages/Login";
-import ProtectedRoute from "./components/ProtectedRoute";
-import PublicRoute from "./components/PublicRoute";
-import Dashboard from "./pages/dashboard";
-import Profile from "./pages/Profile";
 import Notes from "./pages/AllNotes";
+import Profile from "./pages/Profile";
+import Dashboard from "./pages/Dashboard";
 import NoteDetails from "./pages/NoteDetails";
+import PublicRoute from "./components/PublicRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const Index = () => {
   return (

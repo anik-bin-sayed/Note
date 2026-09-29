@@ -1,5 +1,7 @@
+// react router dom
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+
+// react icons
 import {
   FiArrowLeft,
   FiCheckCircle,
@@ -9,6 +11,9 @@ import {
   FiShield,
   FiUser,
 } from "react-icons/fi";
+
+// local components
+import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
   const navigate = useNavigate();

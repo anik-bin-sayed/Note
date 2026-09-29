@@ -1,19 +1,25 @@
+// react
 import { useState } from "react";
 
-import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import LoadingNote from "../components/Note/LoadingNote";
-import CreateNoteModal from "../components/Note/Dashboard/CreateNoteModal";
-import Header from "../components/Note/Dashboard/Header";
-import Error from "../components/Note/Dashboard/Error";
-import Stats from "../components/Note/Dashboard/Stats";
-import Empty from "../components/Note/Empty";
-import ListEntry from "../components/Note/ListEntry";
+// react router dom
+import { useSearchParams } from "react-router-dom";
+
+// rtk query
 import {
   useDeleteEntryMutation,
   useGetDashboardNotesQuery,
 } from "../lib/features/noteApi";
-import { useSearchParams } from "react-router-dom";
+
+// Local components
+import Navbar from "../components/Navbar";
+import Empty from "../components/Note/Empty";
+import { useAuth } from "../context/AuthContext";
+import ListEntry from "../components/Note/ListEntry";
+import Stats from "../components/Note/Dashboard/Stats";
+import Error from "../components/Note/Dashboard/Error";
+import LoadingNote from "../components/Note/LoadingNote";
+import Header from "../components/Note/Dashboard/Header";
+import CreateNoteModal from "../components/Note/Dashboard/CreateNoteModal";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();

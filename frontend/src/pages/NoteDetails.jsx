@@ -1,16 +1,23 @@
+// react icons
 import { FiArrowLeft, FiBookOpen } from "react-icons/fi";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import Header from "../components/Note/NoteDetails/Header";
-import Breadcrumb from "../components/Note/NoteDetails/Breadcrumb";
 
-import MetaInfo from "../components/Note/NoteDetails/MetaInfo";
-import LoadingNoteDetails from "../components/Note/NoteDetails/LoadingNoteDetails";
+// react router dom
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+// dompurify
+import DOMPurify from "dompurify";
+
+// rtk query
 import {
   useDeleteEntryMutation,
   useGetNoteDetailsQuery,
 } from "../lib/features/noteApi";
 
-import DOMPurify from "dompurify";
+// local components
+import Header from "../components/Note/NoteDetails/Header";
+import MetaInfo from "../components/Note/NoteDetails/MetaInfo";
+import Breadcrumb from "../components/Note/NoteDetails/Breadcrumb";
+import LoadingNoteDetails from "../components/Note/NoteDetails/LoadingNoteDetails";
 
 const NoteDetails = () => {
   const { id } = useParams();
@@ -81,23 +88,13 @@ const NoteDetails = () => {
               <div className="px-6 py-8 sm:px-8 sm:py-10">
                 <div
                   className="
-    prose
-    prose-slate
-    max-w-none
-
-    prose-headings:font-bold
-    prose-p:leading-7
-    prose-a:text-blue-600
-    prose-code:rounded
-    prose-code:bg-slate-100
-    prose-code:px-1
-    prose-code:py-0.5
-    prose-pre:rounded-xl
-    prose-blockquote:border-l-4
-    prose-blockquote:border-slate-300
+    prose prose-slate max-w-none
+    [&_p]:mb-4
+    [&_p:last-child]:mb-0
+    [&_br]:content-['']
   "
                   dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(note?.text),
+                    __html: DOMPurify.sanitize(note.text),
                   }}
                 />
               </div>

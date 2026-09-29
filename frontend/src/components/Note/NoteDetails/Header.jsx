@@ -1,5 +1,5 @@
-import { FiArrowLeft, FiEdit3, FiTrash2 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
+import { FiArrowLeft, FiEdit3, FiTrash2 } from "react-icons/fi";
 
 const Header = ({ deleting, handleDeleteNote }) => {
   const { id } = useParams();
