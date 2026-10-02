@@ -15,7 +15,11 @@ import {
   useRemoveCollaboratorMutation,
   useRevokeShareLinkMutation,
 } from "../../../lib/features/noteApi";
-import { encodeSharedNoteKey } from "../../../lib/vaultCrypto";
+import api from "../../../lib/api";
+import {
+  encodeSharedNoteKey,
+  encryptNoteKeyForRecipient,
+} from "../../../lib/vaultCrypto";
 
 const ShareCollaboratePanel = ({ note, onClose }) => {
   const [email, setEmail] = useState("");
@@ -67,7 +71,14 @@ const ShareCollaboratePanel = ({ note, onClose }) => {
     event.preventDefault();
     setError("");
     try {
-      await invite({ id: note.id, email, role }).unwrap();
+      const { data } = await api.get("/api/vault/public-key", {
+        params: { email },
+      });
+      const keyEnvelope = await encryptNoteKeyForRecipient(
+        note,
+        data.public_key,
+      );
+      await invite({ id: note.id, email, role, key_envelope: keyEnvelope }).unwrap();
       const key = await encodeSharedNoteKey(note);
       const url = new URL(`/notes/${note.id}`, window.location.origin);
       url.hash = new URLSearchParams({ key }).toString();
@@ -222,8 +233,7 @@ const ShareCollaboratePanel = ({ note, onClose }) => {
             </button>
           </form>
           <p className="mt-2 text-xs leading-5 text-slate-500">
-            The recipient must already have an account. The invite link carries
-            access to this note only.
+            The recipient must already have enabled an encrypted vault. They will see an in-app notification; the copied link remains a fallback.
           </p>
           {!loadingCollaborators && collaborators.length > 0 && (
             <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100">

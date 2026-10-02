@@ -4,6 +4,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 let activeKey = null;
+let activePrivateKey = null;
 
 const bytesToBase64 = (bytes) => {
   let binary = "";
@@ -108,6 +109,8 @@ export const createVault = async (pin) => {
   const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(pin, salt, PBKDF2_ITERATIONS);
   const verifier = await encryptText(key, VERIFIER_TEXT);
+  const recipientKeys = await createRecipientKeyPair(key);
+  activePrivateKey = recipientKeys.privateKey;
 
   return {
     key,
@@ -115,7 +118,31 @@ export const createVault = async (pin) => {
       salt: bytesToBase64(salt),
       iterations: PBKDF2_ITERATIONS,
       verifier,
+      public_key: recipientKeys.public_key,
+      private_key: recipientKeys.private_key,
     },
+  };
+};
+
+export const createRecipientKeyPair = async (vaultKey) => {
+  const pair = await globalThis.crypto.subtle.generateKey(
+    {
+      name: "RSA-OAEP",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256",
+    },
+    true,
+    ["encrypt", "decrypt"],
+  );
+  const privateBytes = new Uint8Array(
+    await globalThis.crypto.subtle.exportKey("pkcs8", pair.privateKey),
+  );
+
+  return {
+    public_key: await globalThis.crypto.subtle.exportKey("jwk", pair.publicKey),
+    private_key: await encryptText(vaultKey, bytesToBase64(privateBytes)),
+    privateKey: pair.privateKey,
   };
 };
 
@@ -136,6 +163,18 @@ export const unlockVault = async (pin, metadata) => {
     throw new Error("Incorrect PIN or passphrase.");
   }
 
+  activePrivateKey = null;
+  if (metadata.private_key && metadata.public_key) {
+    const encodedPrivateKey = await decryptText(key, metadata.private_key);
+    activePrivateKey = await globalThis.crypto.subtle.importKey(
+      "pkcs8",
+      base64ToBytes(encodedPrivateKey),
+      { name: "RSA-OAEP", hash: "SHA-256" },
+      false,
+      ["decrypt"],
+    );
+  }
+
   return key;
 };
 
@@ -145,6 +184,11 @@ export const setVaultKey = (key) => {
 
 export const clearVaultKey = () => {
   activeKey = null;
+  activePrivateKey = null;
+};
+
+export const setVaultPrivateKey = (key) => {
+  activePrivateKey = key;
 };
 
 export const encodeSharedNoteKey = async (entry) => {
@@ -213,6 +257,49 @@ export const decryptNote = async (entry) => {
     throw new Error("Unlock the note vault before continuing.");
   }
 
-  const key = entry.wrapped_key ? await unwrapNoteKey(entry) : activeKey;
+  let key = activeKey;
+  if (entry.recipient_key_ciphertext) {
+    key = await getRecipientNoteKey(entry);
+  } else if (entry.wrapped_key) {
+    key = await unwrapNoteKey(entry);
+  }
   return decryptNoteWithKey(entry, key);
+};
+
+export const getRecipientNoteKey = async (entry) => {
+  if (!activePrivateKey) {
+    throw new Error("Unlock your vault to decrypt this invitation.");
+  }
+
+  const rawNoteKey = await globalThis.crypto.subtle.decrypt(
+    { name: "RSA-OAEP" },
+    activePrivateKey,
+    base64ToBytes(entry.recipient_key_ciphertext),
+  );
+  return globalThis.crypto.subtle.importKey(
+    "raw",
+    rawNoteKey,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"],
+  );
+};
+
+export const encryptNoteKeyForRecipient = async (entry, publicKey) => {
+  const noteKey = await getNoteKey(entry);
+  const rawNoteKey = await globalThis.crypto.subtle.exportKey("raw", noteKey);
+  const recipientKey = await globalThis.crypto.subtle.importKey(
+    "jwk",
+    publicKey,
+    { name: "RSA-OAEP", hash: "SHA-256" },
+    false,
+    ["encrypt"],
+  );
+  const encrypted = await globalThis.crypto.subtle.encrypt(
+    { name: "RSA-OAEP" },
+    recipientKey,
+    rawNoteKey,
+  );
+
+  return bytesToBase64(new Uint8Array(encrypted));
 };

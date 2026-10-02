@@ -4,6 +4,7 @@ import {
   decryptNote,
   decryptNoteWithKey,
   encryptNote,
+  getRecipientNoteKey,
   getNoteKey,
   importSharedNoteKey,
 } from "../../vaultCrypto";
@@ -39,7 +40,11 @@ const decryptEntry = async (entry, baseQuery) => {
     }
 
     encryptedEntry = migration.data;
-  } else if (entry.ciphertext && !entry.wrapped_key) {
+  } else if (
+    entry.ciphertext &&
+    !entry.wrapped_key &&
+    !entry.recipient_key_ciphertext
+  ) {
     const note = await decryptNote(entry);
     const encrypted = await encryptNote(note);
     const migration = await baseQuery({
@@ -163,7 +168,7 @@ export const noteApi = createApi({
   reducerPath: "noteApi",
 
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Note", "Share", "Collaborator"],
+  tagTypes: ["Note", "Share", "Collaborator", "Notification"],
   endpoints: (builder) => ({
     getDashboardNotes: builder.query({
       queryFn: async (_argument, _api, _extraOptions, baseQuery) => {
@@ -253,7 +258,9 @@ export const noteApi = createApi({
           ).get("key");
           const key = fragmentKey
             ? await importSharedNoteKey(fragmentKey)
-            : entry?.wrapped_key
+            : entry?.recipient_key_ciphertext
+              ? await getRecipientNoteKey(entry)
+              : entry?.wrapped_key
               ? await getNoteKey(entry)
               : null;
           const encrypted = await encryptNote(note, key);
@@ -297,10 +304,10 @@ export const noteApi = createApi({
     }),
 
     inviteCollaborator: builder.mutation({
-      query: ({ id, email, role }) => ({
+      query: ({ id, email, role, key_envelope }) => ({
         url: `/entries/${id}/collaborators`,
         method: "POST",
-        body: { email, role },
+        body: { email, role, key_envelope },
       }),
       invalidatesTags: ["Collaborator"],
     }),
@@ -311,6 +318,19 @@ export const noteApi = createApi({
         method: "DELETE",
       }),
       invalidatesTags: ["Collaborator"],
+    }),
+
+    getNotifications: builder.query({
+      query: () => ({ url: "/notifications", method: "GET" }),
+      providesTags: ["Notification"],
+    }),
+
+    markNotificationRead: builder.mutation({
+      query: (id) => ({
+        url: `/notifications/${id}/read`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Notification"],
     }),
 
     migrateLegacyNotes: builder.query({
@@ -333,4 +353,6 @@ export const {
   useGetCollaboratorsQuery,
   useInviteCollaboratorMutation,
   useRemoveCollaboratorMutation,
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
 } = noteApi;

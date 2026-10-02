@@ -3,7 +3,13 @@ import { useDispatch } from "react-redux";
 import { FiAlertCircle, FiLoader, FiLock } from "react-icons/fi";
 import api from "../lib/api";
 import { noteApi } from "../lib/features/noteApi";
-import { createVault, setVaultKey, unlockVault } from "../lib/vaultCrypto";
+import {
+  createRecipientKeyPair,
+  createVault,
+  setVaultKey,
+  setVaultPrivateKey,
+  unlockVault,
+} from "../lib/vaultCrypto";
 
 const MIN_PIN_LENGTH = 8;
 
@@ -60,9 +66,11 @@ const VaultGate = ({ children }) => {
 
     try {
       let key;
+      let needsKeyPairMigration = false;
 
       if (vault?.configured) {
         key = await unlockVault(pin, vault);
+        needsKeyPairMigration = !vault.public_key;
       } else {
         const created = await createVault(pin);
         await api.put("/api/vault", created.metadata);
@@ -71,6 +79,20 @@ const VaultGate = ({ children }) => {
       }
 
       setVaultKey(key);
+  if (needsKeyPairMigration) {
+        const keyPair = await createRecipientKeyPair(key);
+        await api.put("/api/vault/keys", {
+          public_key: keyPair.public_key,
+          private_key: keyPair.private_key,
+        });
+        setVaultPrivateKey(keyPair.privateKey);
+        setVault((current) => ({
+          ...current,
+          configured: true,
+          public_key: keyPair.public_key,
+          private_key: keyPair.private_key,
+        }));
+      }
       dispatch(noteApi.util.resetApiState());
       const migration = dispatch(
         noteApi.endpoints.migrateLegacyNotes.initiate(undefined, {

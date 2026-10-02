@@ -1,5 +1,6 @@
 import { FiBookOpen, FiLogOut, FiUser, FiChevronDown } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import NotificationCenter from "./NotificationCenter";
 
 const Navbar = ({ user, logout }) => {
   return (
@@ -74,6 +75,8 @@ const Navbar = ({ user, logout }) => {
               </div>
             )}
           </Link>
+
+          <NotificationCenter />
 
           {/* Logout */}
           <button

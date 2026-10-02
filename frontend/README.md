@@ -10,7 +10,7 @@ Entries created before this vault was enabled use the previous server-side encry
 
 ### Sharing and Collaboration
 
-Owners can create read-only public links that expire after 30 days or invite an existing account as a viewer/editor. Public links contain a random server token in the path and the per-note decryption key in the URL fragment; fragments are not sent in HTTP requests. Send the full link only to people you trust. Collaborator links require the invited account to sign in, and the owner must share the generated link with them separately.
+Owners can create read-only public links that expire after 30 days or invite an existing account as a viewer/editor. Public links contain a random server token in the path and the per-note decryption key in the URL fragment; fragments are not sent in HTTP requests. Send the full public link only to people you trust. Collaborator invitations require the recipient to have an encrypted vault. Their in-app notification opens the note after sign-in; the note key is RSA-encrypted to the recipient's public key, and their private key stays encrypted by their PIN-derived vault key. The copied fragment link remains available as a fallback.
 
 Editors save encrypted snapshots with last-write-wins behavior. Connected note viewers receive WebSocket revision notifications and reload newer saved content; concurrent edits are not merged. This initial collaboration transport is not Yjs/CRDT, and live notifications require clients to connect to the same backend process.
 
