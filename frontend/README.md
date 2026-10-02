@@ -8,6 +8,12 @@ The API stores encrypted note payloads, IVs, vault salt/KDF metadata, and an enc
 
 Entries created before this vault was enabled use the previous server-side encryption format. After unlock, the browser migrates those entries to client-side encryption; until migration completes, legacy entries are still readable by the authenticated API.
 
+### Sharing and Collaboration
+
+Owners can create read-only public links that expire after 30 days or invite an existing account as a viewer/editor. Public links contain a random server token in the path and the per-note decryption key in the URL fragment; fragments are not sent in HTTP requests. Send the full link only to people you trust. Collaborator links require the invited account to sign in, and the owner must share the generated link with them separately.
+
+Editors save encrypted snapshots with last-write-wins behavior. Connected note viewers receive WebSocket revision notifications and reload newer saved content; concurrent edits are not merged. This initial collaboration transport is not Yjs/CRDT, and live notifications require clients to connect to the same backend process.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -1,17 +1,23 @@
 // react
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 // react icons
 import { FcGoogle } from "react-icons/fc";
 import { FiFileText, FiShield } from "react-icons/fi";
 
 const Login = () => {
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = () => {
     setLoading(true);
 
     try {
+      const returnPath = location.state?.from;
+      if (returnPath?.startsWith("/") && !returnPath.startsWith("//")) {
+        sessionStorage.setItem("postLoginPath", returnPath);
+      }
       window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
     } catch (error) {
       console.error(error);

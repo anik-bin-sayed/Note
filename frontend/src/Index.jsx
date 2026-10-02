@@ -5,12 +5,15 @@ import Notes from "./pages/AllNotes";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import NoteDetails from "./pages/NoteDetails";
+import PublicSharedNote from "./pages/PublicSharedNote";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const Index = () => {
   return (
     <Routes>
+      <Route path="/s/:token" element={<PublicSharedNote />} />
+
       <Route element={<PublicRoute />}>
         <Route path="/" element={<Login />} />
       </Route>

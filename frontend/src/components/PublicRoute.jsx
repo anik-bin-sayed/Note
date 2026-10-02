@@ -10,7 +10,9 @@ const PublicRoute = () => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={"/dashboard"} replace />;
+    const returnPath = sessionStorage.getItem("postLoginPath");
+    if (returnPath) sessionStorage.removeItem("postLoginPath");
+    return <Navigate to={returnPath || "/dashboard"} replace />;
   }
   return <Outlet />;
 };

@@ -47,7 +47,7 @@ const deriveKey = async (pin, salt, iterations) => {
     material,
     { name: "AES-GCM", length: 256 },
     false,
-    ["encrypt", "decrypt"],
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"],
   );
 };
 
@@ -73,6 +73,33 @@ const decryptText = async (key, encrypted) => {
   );
 
   return decoder.decode(cleartext);
+};
+
+const unwrapNoteKey = async (entry) =>
+  globalThis.crypto.subtle.unwrapKey(
+    "raw",
+    base64ToBytes(entry.wrapped_key),
+    activeKey,
+    { name: "AES-GCM", iv: base64ToBytes(entry.key_iv) },
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"],
+  );
+
+export const getNoteKey = (entry) => unwrapNoteKey(entry);
+
+const parseNote = (payload) => {
+  const note = JSON.parse(payload);
+
+  if (
+    note.version !== 1 ||
+    typeof note.title !== "string" ||
+    typeof note.text !== "string"
+  ) {
+    throw new Error("This note uses an unsupported encrypted format.");
+  }
+
+  return { title: note.title, text: note.text };
 };
 
 export const createVault = async (pin) => {
@@ -120,34 +147,72 @@ export const clearVaultKey = () => {
   activeKey = null;
 };
 
-export const encryptNote = async (note) => {
+export const encodeSharedNoteKey = async (entry) => {
+  const key = await getNoteKey(entry);
+  const encoded = bytesToBase64(
+    new Uint8Array(await globalThis.crypto.subtle.exportKey("raw", key)),
+  );
+
+  return encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
+export const importSharedNoteKey = (encoded) => {
+  const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+
+  return globalThis.crypto.subtle.importKey(
+    "raw",
+    base64ToBytes(padded),
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+};
+
+export const encryptNote = async (note, sharedKey = null) => {
   if (!activeKey) {
     throw new Error("Unlock the note vault before continuing.");
   }
 
+  const noteKey =
+    sharedKey ||
+    (await globalThis.crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"],
+    ));
   const payload = JSON.stringify({
     version: 1,
     title: note.title,
     text: note.text,
   });
+  const encrypted = await encryptText(noteKey, payload);
 
-  return encryptText(activeKey, payload);
+  if (sharedKey) return encrypted;
+
+  const keyIv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+  const wrappedKey = await globalThis.crypto.subtle.wrapKey(
+    "raw",
+    noteKey,
+    activeKey,
+    { name: "AES-GCM", iv: keyIv },
+  );
+
+  return {
+    ...encrypted,
+    wrapped_key: bytesToBase64(new Uint8Array(wrappedKey)),
+    key_iv: bytesToBase64(keyIv),
+  };
 };
+
+export const decryptNoteWithKey = async (entry, key) =>
+  parseNote(await decryptText(key, entry));
 
 export const decryptNote = async (entry) => {
   if (!activeKey) {
     throw new Error("Unlock the note vault before continuing.");
   }
 
-  const payload = JSON.parse(await decryptText(activeKey, entry));
-
-  if (
-    payload.version !== 1 ||
-    typeof payload.title !== "string" ||
-    typeof payload.text !== "string"
-  ) {
-    throw new Error("This note uses an unsupported encrypted format.");
-  }
-
-  return { title: payload.title, text: payload.text };
+  const key = entry.wrapped_key ? await unwrapNoteKey(entry) : activeKey;
+  return decryptNoteWithKey(entry, key);
 };

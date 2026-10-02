@@ -26,7 +26,10 @@ const VaultGate = ({ children }) => {
         if (active) setVault(data);
       })
       .catch(() => {
-        if (active) setError("Could not load your encryption vault. Reload to try again.");
+        if (active)
+          setError(
+            "Could not load your encryption vault. Reload to try again.",
+          );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -42,7 +45,9 @@ const VaultGate = ({ children }) => {
     setError("");
 
     if (pin.length < MIN_PIN_LENGTH) {
-      setError(`Use at least ${MIN_PIN_LENGTH} characters for your PIN or passphrase.`);
+      setError(
+        `Use at least ${MIN_PIN_LENGTH} characters for your PIN or passphrase.`,
+      );
       return;
     }
 
@@ -61,28 +66,31 @@ const VaultGate = ({ children }) => {
       } else {
         const created = await createVault(pin);
         await api.put("/api/vault", created.metadata);
+        setVault({ configured: true, ...created.metadata });
         key = created.key;
       }
 
       setVaultKey(key);
       dispatch(noteApi.util.resetApiState());
       const migration = dispatch(
-        noteApi.endpoints.migrateLegacyNotes.initiate(),
+        noteApi.endpoints.migrateLegacyNotes.initiate(undefined, {
+          forceRefetch: true,
+        }),
       );
-      migration
-        .unwrap()
-        .catch((migrationError) => {
-          console.error("Legacy note migration failed:", migrationError);
-        })
-        .finally(() => migration.unsubscribe());
+      try {
+        await migration.unwrap();
+      } finally {
+        migration.unsubscribe();
+      }
       setUnlocked(true);
       setPin("");
       setConfirmation("");
     } catch (unlockError) {
       setError(
         unlockError?.response?.data?.detail ||
+          unlockError?.error ||
           unlockError?.message ||
-          "Could not unlock the note vault.",
+          "Could not unlock or migrate the note vault. Please try again.",
       );
     } finally {
       setSaving(false);
@@ -98,11 +106,19 @@ const VaultGate = ({ children }) => {
     <main className="grid min-h-screen place-items-center bg-slate-100 px-4 py-10 text-slate-900">
       <section className="w-full max-w-md border border-slate-200 bg-white p-7 shadow-sm sm:p-9">
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-slate-900 text-white">
-          {loading ? <FiLoader className="animate-spin text-xl" /> : <FiLock className="text-xl" />}
+          {loading ? (
+            <FiLoader className="animate-spin text-xl" />
+          ) : (
+            <FiLock className="text-xl" />
+          )}
         </div>
 
         <h1 className="text-2xl font-bold">
-          {loading ? "Checking vault" : configured ? "Unlock your notes" : "Create your note PIN"}
+          {loading
+            ? "Checking vault"
+            : configured
+              ? "Unlock your notes"
+              : "Create your note PIN"}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
           {configured
@@ -111,7 +127,10 @@ const VaultGate = ({ children }) => {
         </p>
 
         {error && (
-          <div role="alert" className="mt-5 flex gap-2 border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div
+            role="alert"
+            className="mt-5 flex gap-2 border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          >
             <FiAlertCircle className="mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -152,13 +171,15 @@ const VaultGate = ({ children }) => {
 
             {!configured && (
               <p className="border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                There is no PIN reset. If you forget it, your notes cannot be recovered.
+                There is no PIN reset. If you forget it, your notes cannot be
+                recovered.
               </p>
             )}
 
             {!supported && (
               <p role="alert" className="text-sm text-red-700">
-                Secure browser encryption is unavailable. Use a modern browser over HTTPS.
+                Secure browser encryption is unavailable. Use a modern browser
+                over HTTPS.
               </p>
             )}
 
@@ -168,7 +189,11 @@ const VaultGate = ({ children }) => {
               className="flex w-full items-center justify-center gap-2 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving && <FiLoader className="animate-spin" />}
-              {saving ? "Securing vault..." : configured ? "Unlock notes" : "Create encrypted vault"}
+              {saving
+                ? "Securing vault..."
+                : configured
+                  ? "Unlock notes"
+                  : "Create encrypted vault"}
             </button>
           </form>
         )}
