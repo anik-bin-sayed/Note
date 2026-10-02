@@ -3,19 +3,25 @@ from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import ReturnDocument
 
-from app.database import entries_collection
+from app.database import (
+    entries_collection,
+    note_collaborators_collection,
+    shared_notes_collection,
+)
 from app.services.encryption import (
     decrypt_text,
     encrypt_text,
 )
 
 
-def serialize_entry(entry: dict) -> dict:
+def serialize_entry(entry: dict, role: str = "owner") -> dict:
     serialized = {
         "id": str(entry["_id"]),
         "user_id": entry["user_id"],
         "created_at": entry["created_at"],
         "updated_at": entry["updated_at"],
+        "role": role,
+        "revision": entry.get("revision", 0),
     }
 
     if "ciphertext" in entry:
@@ -25,6 +31,13 @@ def serialize_entry(entry: dict) -> dict:
                 "iv": entry["iv"],
             }
         )
+        if "wrapped_key" in entry and "key_iv" in entry:
+            serialized.update(
+                {
+                    "wrapped_key": entry["wrapped_key"],
+                    "key_iv": entry["key_iv"],
+                }
+            )
     else:
         serialized.update(
             {
@@ -40,6 +53,8 @@ async def create_entry(
     user_id: str,
     ciphertext: str,
     iv: str,
+    wrapped_key: str | None = None,
+    key_iv: str | None = None,
 ):
     now = datetime.now(timezone.utc)
 
@@ -49,7 +64,10 @@ async def create_entry(
         "iv": iv,
         "created_at": now,
         "updated_at": now,
+        "revision": 1,
     }
+    if wrapped_key is not None and key_iv is not None:
+        entry.update({"wrapped_key": wrapped_key, "key_iv": key_iv})
 
     result = await entries_collection.insert_one(entry)
 
@@ -58,9 +76,7 @@ async def create_entry(
     return serialize_entry(entry)
 
 
-async def get_user_entries(
-    user_id: str, page: int = 1, limit: int = 9
-):
+async def get_user_entries(user_id: str, page: int = 1, limit: int = 9):
     skip = (page - 1) * limit
     query = {"user_id": user_id}
 
@@ -93,17 +109,21 @@ async def get_entry_by_id(
     if not ObjectId.is_valid(entry_id):
         return None
 
-    entry = await entries_collection.find_one(
-        {
-            "_id": ObjectId(entry_id),
-            "user_id": user_id,
-        }
-    )
+    entry = await entries_collection.find_one({"_id": ObjectId(entry_id)})
 
     if not entry:
         return None
 
-    return serialize_entry(entry)
+    if entry["user_id"] == user_id:
+        return serialize_entry(entry)
+
+    collaborator = await note_collaborators_collection.find_one(
+        {"note_id": ObjectId(entry_id), "user_id": user_id}
+    )
+    if not collaborator:
+        return None
+
+    return serialize_entry(entry, collaborator["role"])
 
 
 async def delete_entry(user_id: str, entry_id: str):
@@ -117,6 +137,10 @@ async def delete_entry(user_id: str, entry_id: str):
         }
     )
 
+    if result.deleted_count == 1:
+        await note_collaborators_collection.delete_many({"note_id": ObjectId(entry_id)})
+        await shared_notes_collection.delete_many({"note_id": ObjectId(entry_id)})
+
     return result.deleted_count == 1
 
 
@@ -125,22 +149,34 @@ async def update_entry(
     entry_id: str,
     ciphertext: str,
     iv: str,
+    wrapped_key: str | None = None,
+    key_iv: str | None = None,
 ):
     if not ObjectId.is_valid(entry_id):
         return None
 
+    current = await get_entry_by_id(user_id, entry_id)
+    if not current:
+        return None
+    if current["role"] == "viewer":
+        raise PermissionError("Viewer access cannot update notes")
+
     now = datetime.now(timezone.utc)
+    update_fields = {
+        "ciphertext": ciphertext,
+        "iv": iv,
+        "updated_at": now,
+    }
+    if current["role"] == "owner" and wrapped_key is not None and key_iv is not None:
+        update_fields.update({"wrapped_key": wrapped_key, "key_iv": key_iv})
+
     entry = await entries_collection.find_one_and_update(
         {
             "_id": ObjectId(entry_id),
-            "user_id": user_id,
         },
         {
-            "$set": {
-                "ciphertext": ciphertext,
-                "iv": iv,
-                "updated_at": now,
-            },
+            "$set": update_fields,
+            "$inc": {"revision": 1},
             "$unset": {
                 "title": "",
                 "text": "",
@@ -149,4 +185,4 @@ async def update_entry(
         return_document=ReturnDocument.AFTER,
     )
 
-    return serialize_entry(entry) if entry else None
+    return serialize_entry(entry, current["role"]) if entry else None

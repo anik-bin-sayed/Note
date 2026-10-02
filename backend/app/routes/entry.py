@@ -17,6 +17,7 @@ from app.services.entry_service import (
     get_entry_by_id,
     update_entry,
 )
+from app.services.live_updates import note_update_hub
 
 router = APIRouter(
     prefix="/api/entries",
@@ -37,6 +38,8 @@ async def create_new_entry(
         user_id=current_user_id,
         ciphertext=data.ciphertext,
         iv=data.iv,
+        wrapped_key=data.wrapped_key,
+        key_iv=data.key_iv,
     )
 
 
@@ -53,9 +56,7 @@ async def get_entries(
     ),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return await get_user_entries(
-        user_id=current_user_id, page=page, limit=limit
-    )
+    return await get_user_entries(user_id=current_user_id, page=page, limit=limit)
 
 
 @router.get(
@@ -89,12 +90,20 @@ async def update_existing_entry(
     data: EntryUpdate,
     current_user_id: str = Depends(get_current_user_id),
 ):
-    entry = await update_entry(
-        user_id=current_user_id,
-        entry_id=entry_id,
-        ciphertext=data.ciphertext,
-        iv=data.iv,
-    )
+    try:
+        entry = await update_entry(
+            user_id=current_user_id,
+            entry_id=entry_id,
+            ciphertext=data.ciphertext,
+            iv=data.iv,
+            wrapped_key=data.wrapped_key,
+            key_iv=data.key_iv,
+        )
+    except PermissionError as error:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(error),
+        ) from error
 
     if not entry:
         raise HTTPException(
@@ -102,6 +111,15 @@ async def update_existing_entry(
             detail="Entry not found",
         )
 
+    await note_update_hub.broadcast(
+        entry_id,
+        {
+            "type": "note-updated",
+            "revision": entry["revision"],
+            "updated_at": entry["updated_at"].isoformat(),
+            "updated_by": current_user_id,
+        },
+    )
     return entry
 
 

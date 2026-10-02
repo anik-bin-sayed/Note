@@ -4,6 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routes.auth import router as auth_router
 from app.routes.entry import router as entry_router
+from app.routes.live import router as live_router
+from app.routes.sharing import router as sharing_router
 from app.routes.vault import router as vault_router
 from app.database import client
 
@@ -25,7 +27,9 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(entry_router)
+app.include_router(live_router)
 app.include_router(vault_router)
+app.include_router(sharing_router)
 
 
 @app.get("/test-db")
