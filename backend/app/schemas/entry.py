@@ -4,35 +4,21 @@ from pydantic import BaseModel, Field
 
 
 class EntryCreate(BaseModel):
-    title: str = Field(
-        ...,
-        min_length=1,
-        max_length=255,
-    )
-
-    text: str = Field(
-        ...,
-        min_length=1,
-    )
+    ciphertext: str = Field(..., min_length=1, max_length=12_000_000)
+    iv: str = Field(..., min_length=16, max_length=16)
 
 
 class EntryUpdate(BaseModel):
-    title: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=255,
-    )
-
-    text: str | None = Field(
-        default=None,
-        min_length=1,
-    )
+    ciphertext: str = Field(..., min_length=1, max_length=12_000_000)
+    iv: str = Field(..., min_length=16, max_length=16)
 
 
 class EntryResponse(BaseModel):
     id: str
     user_id: str
-    title: str
-    text: str
+    ciphertext: str | None = None
+    iv: str | None = None
+    legacy_title: str | None = None
+    legacy_text: str | None = None
     created_at: datetime
     updated_at: datetime

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from bson import ObjectId
+from pymongo import ReturnDocument
 
 from app.database import entries_collection
 from app.services.encryption import (
@@ -10,27 +11,42 @@ from app.services.encryption import (
 
 
 def serialize_entry(entry: dict) -> dict:
-    return {
+    serialized = {
         "id": str(entry["_id"]),
         "user_id": entry["user_id"],
-        "title": entry["title"],
-        "text": decrypt_text(entry["text"]),
         "created_at": entry["created_at"],
         "updated_at": entry["updated_at"],
     }
 
+    if "ciphertext" in entry:
+        serialized.update(
+            {
+                "ciphertext": entry["ciphertext"],
+                "iv": entry["iv"],
+            }
+        )
+    else:
+        serialized.update(
+            {
+                "legacy_title": entry["title"],
+                "legacy_text": decrypt_text(entry["text"]),
+            }
+        )
+
+    return serialized
+
 
 async def create_entry(
     user_id: str,
-    title: str,
-    text: str,
+    ciphertext: str,
+    iv: str,
 ):
     now = datetime.now(timezone.utc)
 
     entry = {
         "user_id": user_id,
-        "title": title,
-        "text": encrypt_text(text),
+        "ciphertext": ciphertext,
+        "iv": iv,
         "created_at": now,
         "updated_at": now,
     }
@@ -43,17 +59,10 @@ async def create_entry(
 
 
 async def get_user_entries(
-    user_id: str, page: int = 1, limit: int = 9, search: str = ""
+    user_id: str, page: int = 1, limit: int = 9
 ):
     skip = (page - 1) * limit
     query = {"user_id": user_id}
-
-    if search.strip():
-        term = search.strip()
-        query["$or"] = [
-            {"title": {"$regex": term, "$options": "i"}},
-            {"text": {"$regex": term, "$options": "i"}},
-        ]
 
     total = await entries_collection.count_documents(query)
 
@@ -109,3 +118,35 @@ async def delete_entry(user_id: str, entry_id: str):
     )
 
     return result.deleted_count == 1
+
+
+async def update_entry(
+    user_id: str,
+    entry_id: str,
+    ciphertext: str,
+    iv: str,
+):
+    if not ObjectId.is_valid(entry_id):
+        return None
+
+    now = datetime.now(timezone.utc)
+    entry = await entries_collection.find_one_and_update(
+        {
+            "_id": ObjectId(entry_id),
+            "user_id": user_id,
+        },
+        {
+            "$set": {
+                "ciphertext": ciphertext,
+                "iv": iv,
+                "updated_at": now,
+            },
+            "$unset": {
+                "title": "",
+                "text": "",
+            },
+        },
+        return_document=ReturnDocument.AFTER,
+    )
+
+    return serialize_entry(entry) if entry else None
