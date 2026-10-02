@@ -2,6 +2,7 @@ import { FiSearch } from "react-icons/fi";
 import { useSearchParams } from "react-router-dom";
 
 const Search = ({
+  searchInput,
   setSearchInput,
   setShowSuggestions,
   handleSearchSubmit,
@@ -10,8 +11,6 @@ const Search = ({
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const search = searchParams.get("q") || "";
-
   return (
     <div className="mb-8">
       <div className="relative">
@@ -19,7 +18,7 @@ const Search = ({
 
         <input
           type="text"
-          value={search}
+          value={searchInput}
           onChange={(event) => {
             const value = event.target.value;
 
@@ -29,12 +28,6 @@ const Search = ({
             // URL update
             const newParams = new URLSearchParams(searchParams);
 
-            if (value.trim()) {
-              newParams.set("q", value);
-            } else {
-              newParams.delete("q");
-            }
-
             newParams.set("page", "1");
 
             setSearchParams(newParams);
@@ -42,7 +35,7 @@ const Search = ({
             setShowSuggestions(Boolean(value.trim()));
           }}
           onFocus={() => {
-            setShowSuggestions(Boolean(search.trim()));
+            setShowSuggestions(Boolean(searchInput.trim()));
           }}
           onBlur={() => {
             setTimeout(() => {
@@ -52,7 +45,7 @@ const Search = ({
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
-              handleSearchSubmit();
+              handleSearchSubmit(searchInput);
             }
           }}
           placeholder="Search your notes..."

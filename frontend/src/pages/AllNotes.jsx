@@ -20,19 +20,19 @@ import Search from "../components/Note/AllNotes/Search";
 import LoadingNote from "../components/Note/LoadingNote";
 import Pagination from "../components/Note/AllNotes/Pagination";
 
+const EMPTY_ENTRIES = [];
+
 const Notes = () => {
   const { user, logout } = useAuth();
 
-  const [searchInput, setSearchInput] = useState("");
-  const [submittedSearch, setSubmittedSearch] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") || "";
+  const [searchInput, setSearchInput] = useState(search);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [error, setError] = useState("");
 
   const limit = 9;
   const page = Number(searchParams.get("page")) || 1;
-  const search = searchParams.get("q") || "";
-
   const { data, isLoading, refetch } = useGetAllNotesQuery({
     page,
     limit,
@@ -40,7 +40,7 @@ const Notes = () => {
   });
   const [deleteEntry, { isLoading: deleting }] = useDeleteEntryMutation();
 
-  const entries = data?.items;
+  const entries = data?.items ?? EMPTY_ENTRIES;
   const total = data?.total;
   const totalPages = data?.total_pages ?? 1;
 
@@ -74,6 +74,7 @@ const Notes = () => {
 
     params.set("page", "1");
 
+    setSearchInput(normalized);
     setSearchParams(params);
     setShowSuggestions(false);
   };
@@ -173,7 +174,7 @@ const Notes = () => {
 
         {/* Empty */}
         {!isLoading && entries?.length === 0 && (
-          <Empty search={submittedSearch || searchInput} />
+          <Empty search={search || searchInput} />
         )}
 
         {/* Entries */}

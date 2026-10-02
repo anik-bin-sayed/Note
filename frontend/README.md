@@ -1,5 +1,13 @@
 # React + Vite
 
+## Encrypted Note Vault
+
+On first sign-in, create a PIN or passphrase with at least 8 characters. The browser derives an AES-256 key using PBKDF2-HMAC-SHA-256 (600,000 iterations and a per-account random salt), then encrypts each note with AES-GCM and a fresh 96-bit IV. The PIN and derived key are never sent to the API or saved in browser storage; the key remains in memory until the page is closed or the user logs out.
+
+The API stores encrypted note payloads, IVs, vault salt/KDF metadata, and an encrypted verifier. Account ownership and note timestamps remain visible to the server. Note content search runs locally after unlock, so the server cannot search encrypted notes. A forgotten PIN cannot be reset and encrypted notes cannot be recovered without it. Use a strong passphrase, and serve the app over HTTPS outside local development.
+
+Entries created before this vault was enabled use the previous server-side encryption format. After unlock, the browser migrates those entries to client-side encryption; until migration completes, legacy entries are still readable by the authenticated API.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

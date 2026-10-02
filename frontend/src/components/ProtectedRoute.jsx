@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import Loader from "./Loader";
+import VaultGate from "./VaultGate";
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -13,7 +14,11 @@ const ProtectedRoute = () => {
   if (!isAuthenticated) {
     return <Navigate to={"/"} replace />;
   }
-  return <Outlet />;
+  return (
+    <VaultGate>
+      <Outlet />
+    </VaultGate>
+  );
 };
 
 export default ProtectedRoute;
