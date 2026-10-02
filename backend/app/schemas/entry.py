@@ -24,6 +24,7 @@ class EntryResponse(BaseModel):
     iv: str | None = None
     wrapped_key: str | None = None
     key_iv: str | None = None
+    recipient_key_ciphertext: str | None = None
     legacy_title: str | None = None
     legacy_text: str | None = None
     created_at: datetime

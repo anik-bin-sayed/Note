@@ -7,6 +7,7 @@ from bson import ObjectId
 from app.database import (
     entries_collection,
     note_collaborators_collection,
+    notifications_collection,
     shared_notes_collection,
     users_collection,
 )
@@ -110,6 +111,7 @@ async def add_collaborator(
     entry_id: str,
     email: str,
     role: str,
+    key_envelope: str,
 ):
     if not ObjectId.is_valid(entry_id):
         return None, "note"
@@ -135,6 +137,7 @@ async def add_collaborator(
         {
             "$set": {
                 "role": role,
+                "key_envelope": key_envelope,
                 "updated_at": datetime.now(timezone.utc),
             },
             "$setOnInsert": {
@@ -142,6 +145,23 @@ async def add_collaborator(
             },
         },
         upsert=True,
+    )
+
+    owner = await users_collection.find_one(
+        {"_id": ObjectId(owner_id)}, {"name": 1, "email": 1}
+    )
+    sender = (owner or {}).get("name") or (owner or {}).get("email") or "A user"
+    await notifications_collection.insert_one(
+        {
+            "user_id": user_id,
+            "type": "note_invite",
+            "note_id": ObjectId(entry_id),
+            "sender_name": sender,
+            "role": role,
+            "message": f"{sender} invited you to a note as {role}.",
+            "created_at": datetime.now(timezone.utc),
+            "read_at": None,
+        }
     )
 
     return {

@@ -123,7 +123,12 @@ async def get_entry_by_id(
     if not collaborator:
         return None
 
-    return serialize_entry(entry, collaborator["role"])
+    serialized = serialize_entry(entry, collaborator["role"])
+    serialized.pop("wrapped_key", None)
+    serialized.pop("key_iv", None)
+    if collaborator.get("key_envelope"):
+        serialized["recipient_key_ciphertext"] = collaborator["key_envelope"]
+    return serialized
 
 
 async def delete_entry(user_id: str, entry_id: str):
@@ -185,4 +190,14 @@ async def update_entry(
         return_document=ReturnDocument.AFTER,
     )
 
-    return serialize_entry(entry, current["role"]) if entry else None
+    if not entry:
+        return None
+
+    serialized = serialize_entry(entry, current["role"])
+    if current["role"] != "owner":
+        serialized.pop("wrapped_key", None)
+        serialized.pop("key_iv", None)
+        serialized["recipient_key_ciphertext"] = current.get(
+            "recipient_key_ciphertext"
+        )
+    return serialized

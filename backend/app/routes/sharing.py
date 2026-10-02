@@ -4,6 +4,7 @@ from app.dependencies.auth import get_current_user_id
 from app.schemas.sharing import (
     CollaboratorCreate,
     CollaboratorResponse,
+    NotificationResponse,
     PublicShareCreate,
 )
 from app.services.sharing_service import (
@@ -15,6 +16,9 @@ from app.services.sharing_service import (
     remove_collaborator,
     revoke_public_share,
 )
+from app.database import notifications_collection
+from bson import ObjectId
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/api", tags=["Sharing"])
 
@@ -113,6 +117,7 @@ async def invite_collaborator(
         entry_id=entry_id,
         email=data.email,
         role=data.role,
+        key_envelope=data.key_envelope,
     )
     if reason == "user":
         raise HTTPException(
@@ -130,6 +135,53 @@ async def invite_collaborator(
             detail="Note not found",
         )
     return collaborator
+
+
+@router.get("/notifications", response_model=list[NotificationResponse])
+async def get_notifications(
+    current_user_id: str = Depends(get_current_user_id),
+):
+    notifications = []
+    cursor = (
+        notifications_collection.find({"user_id": current_user_id})
+        .sort("created_at", -1)
+        .limit(50)
+    )
+    async for item in cursor:
+        notifications.append(
+            {
+                "id": str(item["_id"]),
+                "type": item["type"],
+                "message": item["message"],
+                "note_id": str(item["note_id"]),
+                "role": item["role"],
+                "created_at": item["created_at"],
+                "read_at": item.get("read_at"),
+            }
+        )
+    return notifications
+
+
+@router.patch("/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user_id: str = Depends(get_current_user_id),
+):
+    if not ObjectId.is_valid(notification_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found",
+        )
+    item = await notifications_collection.find_one_and_update(
+        {"_id": ObjectId(notification_id), "user_id": current_user_id},
+        {"$set": {"read_at": datetime.now(timezone.utc)}},
+    )
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found",
+        )
+    return {"id": notification_id, "read": True}
 
 
 @router.delete(
