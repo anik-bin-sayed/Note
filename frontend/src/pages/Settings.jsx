@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiLoader, FiMoon, FiSun } from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
 import { useTheme } from "../context/ThemeContext";
@@ -15,6 +14,8 @@ import {
   setVaultPinRequired,
   unlockVault,
 } from "../lib/vaultCrypto";
+import Appearance from "../components/Settings/Appearance";
+import EncryptedVault from "../components/Settings/EncryptedVault";
 
 const MIN_PIN_LENGTH = 8;
 
@@ -27,7 +28,7 @@ const getErrorMessage = (error) => {
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [vault, setVault] = useState(null);
   const [loadingVault, setLoadingVault] = useState(true);
@@ -144,7 +145,6 @@ const Settings = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <Navbar user={user} logout={logout} />
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
         <button
           type="button"
@@ -173,152 +173,22 @@ const Settings = () => {
           </p>
         )}
 
-        <section className="mt-6 border border-slate-200 bg-white p-5 sm:p-6">
-          <h2 className="text-sm font-semibold text-slate-900">Appearance</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Choose your display theme.
-          </p>
-          <div
-            className="mt-4 inline-flex border border-slate-200 p-1"
-            role="group"
-            aria-label="Color theme"
-          >
-            <button
-              type="button"
-              aria-pressed={theme === "light"}
-              onClick={() => setTheme("light")}
-              className={` navbar-menu-item inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "light" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
-            >
-              <FiSun aria-hidden="true" /> Light
-            </button>
-            <button
-              type="button"
-              aria-pressed={theme === "dark"}
-              onClick={() => setTheme("dark")}
-              className={`navbar-menu-item-dark inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "dark" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
-            >
-              <FiMoon aria-hidden="true" /> Dark
-            </button>
-          </div>
-        </section>
+        <Appearance theme={theme} setTheme={setTheme} />
 
-        <section className="mt-5 border border-slate-200 bg-white p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold text-slate-900">
-                Encrypted vault
-              </h2>
-              <p className="mt-1 text-sm leading-5 text-slate-500">
-                {loadingVault
-                  ? "Checking vault status..."
-                  : vault?.configured
-                    ? "Your notes stay encrypted. Manage the PIN prompt for this browser."
-                    : "Create a vault PIN to encrypt your notes and enable note sharing."}
-              </p>
-            </div>
-            {loadingVault && (
-              <FiLoader className="animate-spin text-slate-400" />
-            )}
-          </div>
-
-          {!loadingVault && !vault?.configured && (
-            <form onSubmit={createVaultPin} className="mt-5 space-y-4">
-              <label className="block text-sm font-medium text-slate-700">
-                New PIN or passphrase
-                <input
-                  type="password"
-                  value={pin}
-                  onChange={(event) => setPin(event.target.value)}
-                  minLength={MIN_PIN_LENGTH}
-                  maxLength={128}
-                  autoComplete="new-password"
-                  required
-                  className="mt-1.5 w-full border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900"
-                />
-              </label>
-              <label className="block text-sm font-medium text-slate-700">
-                Confirm PIN or passphrase
-                <input
-                  type="password"
-                  value={confirmation}
-                  onChange={(event) => setConfirmation(event.target.value)}
-                  minLength={MIN_PIN_LENGTH}
-                  maxLength={128}
-                  autoComplete="new-password"
-                  required
-                  className="mt-1.5 w-full border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900"
-                />
-              </label>
-              <label className="flex items-start gap-3 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={pinRequired}
-                  onChange={(event) => setPinRequired(event.target.checked)}
-                  className="mt-1 accent-slate-900"
-                />
-                <span>Ask for my PIN when opening notes in this browser</span>
-              </label>
-              {!pinRequired && (
-                <p className="border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                  This browser will keep a device key for automatic access. Keep
-                  your PIN to open the vault on other browsers or after clearing
-                  this browser&apos;s data.
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {saving && <FiLoader className="animate-spin" />}
-                Create encrypted vault
-              </button>
-            </form>
-          )}
-
-          {!loadingVault && vault?.configured && (
-            <div className="mt-5 space-y-4">
-              <label className="block text-sm font-medium text-slate-700">
-                Current PIN or passphrase
-                <input
-                  type="password"
-                  value={pin}
-                  onChange={(event) => setPin(event.target.value)}
-                  maxLength={128}
-                  autoComplete="current-password"
-                  className="mt-1.5 w-full border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-slate-900"
-                />
-              </label>
-              <label className="flex items-center justify-between gap-4 border-t border-slate-100 pt-4 text-sm">
-                <span>
-                  <span className="block font-semibold text-slate-800">
-                    Require PIN on this browser
-                  </span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    {pinRequired
-                      ? "Notes ask for your PIN when opened."
-                      : "Notes open automatically on this browser."}
-                  </span>
-                </span>
-                <input
-                  type="checkbox"
-                  role="switch"
-                  aria-label="Require PIN on this browser"
-                  checked={pinRequired}
-                  disabled={saving}
-                  onChange={updatePinRequirement}
-                  className="h-5 w-5 shrink-0 accent-slate-900"
-                />
-              </label>
-              <p className="border-l-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                When off, this browser stores a non-exportable device key.
-                Anyone with access to this browser profile can open your notes.
-                Other browsers still require your PIN; clearing site data
-                removes the device key.
-              </p>
-            </div>
-          )}
-        </section>
+        <EncryptedVault
+          loadingVault={loadingVault}
+          vault={vault}
+          pin={pin}
+          confirmation={confirmation}
+          pinRequired={pinRequired}
+          saving={saving}
+          createVaultPin={createVaultPin}
+          updatePinRequirement={updatePinRequirement}
+          setPin={setPin}
+          setConfirmation={setConfirmation}
+          setPinRequired={setPinRequired}
+          MIN_PIN_LENGTH={MIN_PIN_LENGTH}
+        />
       </section>
     </main>
   );

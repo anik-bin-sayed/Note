@@ -11,7 +11,6 @@ import {
 } from "../lib/features/noteApi";
 
 // Local components
-import Navbar from "../components/Navbar";
 import Empty from "../components/Note/Empty";
 import { useAuth } from "../context/AuthContext";
 import ListEntry from "../components/Note/ListEntry";
@@ -31,7 +30,7 @@ const getNotesErrorMessage = (error) => {
 };
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -76,9 +75,6 @@ const Dashboard = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Navbar */}
-      <Navbar user={user} logout={logout} />
-
       {/* Main */}
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}

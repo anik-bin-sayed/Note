@@ -12,9 +12,7 @@ import {
 } from "../lib/features/noteApi";
 
 // local components
-import Navbar from "../components/Navbar";
 import Empty from "../components/Note/Empty";
-import { useAuth } from "../context/AuthContext";
 import ListEntry from "../components/Note/ListEntry";
 import Search from "../components/Note/AllNotes/Search";
 import LoadingNote from "../components/Note/LoadingNote";
@@ -23,8 +21,6 @@ import Pagination from "../components/Note/AllNotes/Pagination";
 const EMPTY_ENTRIES = [];
 
 const Notes = () => {
-  const { user, logout } = useAuth();
-
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("q") || "";
   const [searchInput, setSearchInput] = useState(search);
@@ -104,8 +100,6 @@ const Notes = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <Navbar user={user} logout={logout} />
-
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">

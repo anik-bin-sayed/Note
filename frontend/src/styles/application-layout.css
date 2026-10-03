@@ -1,0 +1,192 @@
+.application-layout {
+  --app-nav-bg: #ffffff;
+  --app-nav-text: #26352d;
+  --app-nav-muted: #718078;
+  --app-nav-border: #e1e8e3;
+  --app-nav-hover: #f2f6f3;
+  --app-nav-active: #e7f3eb;
+  --app-nav-accent: #147a53;
+  min-height: 100vh;
+  background: #f8faf9;
+  color: var(--app-nav-text);
+}
+
+html[data-theme="dark"] .application-layout {
+  --app-nav-bg: #141d17;
+  --app-nav-text: #e7efe9;
+  --app-nav-muted: #a1afa5;
+  --app-nav-border: #344238;
+  --app-nav-hover: #202c24;
+  --app-nav-active: #20392c;
+  --app-nav-accent: #7bd3a6;
+  background: #0f1712;
+}
+
+.application-layout-body {
+  --application-top: 0px;
+  display: flex;
+  min-height: 100vh;
+}
+
+.application-layout-body.has-navbar {
+  --application-top: 72px;
+  min-height: calc(100vh - 72px);
+}
+
+.application-sidebar {
+  position: sticky;
+  top: var(--application-top);
+  z-index: 20;
+  display: flex;
+  width: 228px;
+  height: calc(100vh - var(--application-top));
+  flex: 0 0 228px;
+  flex-direction: column;
+  border-right: 1px solid var(--app-nav-border);
+  background: var(--app-nav-bg);
+  padding: 18px 12px 14px;
+}
+
+.application-sidebar-nav {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+
+.application-sidebar-label {
+  margin: 19px 0 5px;
+  padding: 0 11px;
+  color: var(--app-nav-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.application-nav-item {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 11px;
+  color: var(--app-nav-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.application-nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.application-nav-item:hover {
+  background: var(--app-nav-hover);
+  color: var(--app-nav-text);
+}
+
+.application-nav-item.is-active {
+  background: var(--app-nav-active);
+  color: var(--app-nav-accent);
+  font-weight: 700;
+}
+
+.application-sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--app-nav-border);
+  padding-top: 11px;
+}
+
+.application-layout-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.application-route-content {
+  min-width: 0;
+  min-height: 100%;
+}
+
+.application-route-content > main.min-h-screen,
+.application-route-content > .spreadsheet-shell {
+  min-height: calc(100vh - var(--application-top));
+}
+
+.application-mobile-bar {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .application-layout-body,
+  .application-layout-body.has-navbar {
+    display: block;
+    min-height: calc(100vh - var(--application-top));
+  }
+
+  .application-sidebar {
+    position: fixed;
+    top: var(--application-top);
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    width: min(280px, calc(100vw - 44px));
+    height: auto;
+    box-shadow: 12px 0 28px rgb(8 22 13 / 14%);
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .application-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .application-sidebar-backdrop {
+    position: fixed;
+    z-index: 40;
+    top: var(--application-top);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border: 0;
+    background: rgb(7 17 10 / 42%);
+  }
+
+  .application-mobile-bar {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--app-nav-border);
+    background: var(--app-nav-bg);
+    padding: 0 12px;
+    color: var(--app-nav-text);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .application-mobile-menu-button {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid var(--app-nav-border);
+    border-radius: 5px;
+    background: var(--app-nav-bg);
+    color: var(--app-nav-text);
+    font-size: 17px;
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .application-sidebar,
+  .application-nav-item {
+    transition: none;
+  }
+}
