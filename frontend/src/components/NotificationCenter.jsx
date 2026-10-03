@@ -36,7 +36,7 @@ const NotificationCenter = () => {
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+        className="relative flex h-10 w-10 items-center justify-center rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
       >
         <FiBell />
         {unreadCount > 0 && (
@@ -67,7 +67,7 @@ const NotificationCenter = () => {
                     type="button"
                     onClick={() => openNotification(notification)}
                     disabled={marking}
-                    className={`flex w-full gap-3 px-4 py-3 text-left transition hover:bg-slate-50 ${notification.read_at ? "" : "bg-sky-50/60"}`}
+                    className={`notification-link flex w-full gap-3 px-4 py-3 text-left transition hover:bg-slate-50  ${notification.read_at ? "" : "bg-sky-50/60"}`}
                   >
                     <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                       {notification.read_at ? <FiCheck /> : <FiBell />}

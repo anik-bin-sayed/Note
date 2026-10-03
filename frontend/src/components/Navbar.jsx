@@ -29,11 +29,11 @@ const Navbar = ({ user, logout }) => {
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           to={"/dashboard"}
-          className="border px-2 py-1 rounded-xl bg-gray-300/40 border-gray-300/50"
+          className="border px-2 py-1   border-gray-300/50"
         >
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
@@ -52,10 +52,11 @@ const Navbar = ({ user, logout }) => {
           </div>
         </Link>
         {/* User Section */}
+
         <div className="flex items-center gap-3">
           <div
             ref={menuRef}
-            className="relative"
+            className="relative "
             onMouseEnter={() => setMenuOpen(true)}
             onMouseLeave={() => setMenuOpen(false)}
             onBlur={(event) => {
@@ -75,7 +76,7 @@ const Navbar = ({ user, logout }) => {
               onKeyDown={(event) => {
                 if (event.key === "ArrowDown") setMenuOpen(true);
               }}
-              className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-2 py-1.5 text-left hover:bg-slate-100 sm:px-3"
+              className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-2 py-1.5 text-left hover:bg-slate-100 sm:px-3  cursor-pointer"
             >
               {user?.picture ? (
                 <img
@@ -89,7 +90,7 @@ const Navbar = ({ user, logout }) => {
                   <FiUser className="text-lg" aria-hidden="true" />
                 </span>
               )}
-              <span className="hidden max-w-[150px] sm:block">
+              <span className="hidden max-w-37.5 sm:block">
                 <span className="block truncate text-sm font-semibold text-slate-800">
                   {user?.name || "User"}
                 </span>
@@ -113,7 +114,7 @@ const Navbar = ({ user, logout }) => {
                   role="menuitem"
                   to="/profile"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  className="navbar-menu-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <FiUser aria-hidden="true" /> Profile
                 </Link>
@@ -121,7 +122,7 @@ const Navbar = ({ user, logout }) => {
                   role="menuitem"
                   to="/settings"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  className="navbar-menu-item flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <FiSettings aria-hidden="true" /> Settings
                 </Link>
@@ -138,7 +139,7 @@ const Navbar = ({ user, logout }) => {
                       type="button"
                       aria-pressed={theme === "light"}
                       onClick={() => setTheme("light")}
-                      className={`flex items-center justify-center gap-2 px-2 py-2 text-xs font-semibold ${theme === "light" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                      className={`navbar-menu-item flex items-center justify-center gap-2 px-2 py-2 text-xs font-semibold ${theme === "light" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
                     >
                       <FiSun aria-hidden="true" /> Light
                     </button>
@@ -146,7 +147,7 @@ const Navbar = ({ user, logout }) => {
                       type="button"
                       aria-pressed={theme === "dark"}
                       onClick={() => setTheme("dark")}
-                      className={`flex items-center justify-center gap-2 px-2 py-2 text-xs font-semibold ${theme === "dark" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                      className={`navbar-menu-item-dark flex items-center justify-center gap-2 px-2 py-2 text-xs font-semibold ${theme === "dark" ? "bg-gray-300 text-black " : "text-slate-600 hover:bg-slate-100"}`}
                     >
                       <FiMoon aria-hidden="true" /> Dark
                     </button>
@@ -155,14 +156,12 @@ const Navbar = ({ user, logout }) => {
               </div>
             )}
           </div>
-
           <NotificationCenter />
-
           {/* Logout */}
           <button
             type="button"
             onClick={logout}
-            className="group flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-95"
+            className="group flex cursor-pointer items-center gap-2  border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 active:scale-95"
           >
             <FiLogOut className="text-base transition-transform duration-200 group-hover:-translate-x-0.5" />
 

@@ -25,7 +25,7 @@ const Header = ({ user, setShowAddModal }) => {
         onClick={() => {
           setShowAddModal(true);
         }}
-        className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98]"
+        className="flex cursor-pointer items-center justify-center gap-2 rounded bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.98]"
       >
         <FiPlus className="text-lg" />
         Add Entry

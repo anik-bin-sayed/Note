@@ -187,7 +187,7 @@ const Settings = () => {
               type="button"
               aria-pressed={theme === "light"}
               onClick={() => setTheme("light")}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "light" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={` navbar-menu-item inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "light" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
               <FiSun aria-hidden="true" /> Light
             </button>
@@ -195,7 +195,7 @@ const Settings = () => {
               type="button"
               aria-pressed={theme === "dark"}
               onClick={() => setTheme("dark")}
-              className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "dark" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`navbar-menu-item-dark inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${theme === "dark" ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
             >
               <FiMoon aria-hidden="true" /> Dark
             </button>
