@@ -11,9 +11,7 @@ class LiveUpdateAuthorizationTests(unittest.TestCase):
         client = TestClient(app)
 
         with self.assertRaises(WebSocketDisconnect) as error:
-            with client.websocket_connect(
-                "/api/entries/000000000000000000000001/live"
-            ):
+            with client.websocket_connect("/api/entries/000000000000000000000001/live"):
                 self.fail("Unauthenticated WebSocket connection was accepted")
 
         self.assertEqual(error.exception.code, 4401)

@@ -54,9 +54,15 @@ async def get_entries(
         ge=1,
         le=100,
     ),
+    owned_only: bool = Query(default=False),
     current_user_id: str = Depends(get_current_user_id),
 ):
-    return await get_user_entries(user_id=current_user_id, page=page, limit=limit)
+    return await get_user_entries(
+        user_id=current_user_id,
+        page=page,
+        limit=limit,
+        owned_only=owned_only,
+    )
 
 
 @router.get(

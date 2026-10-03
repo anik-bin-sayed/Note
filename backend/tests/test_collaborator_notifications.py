@@ -131,6 +131,43 @@ class CollaboratorNotificationTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("wrapped_key", shared_note)
         self.assertNotIn("key_iv", shared_note)
 
+    async def test_owned_entry_listing_excludes_collaborator_notes(self):
+        user_id = str(ObjectId())
+        note = {
+            "_id": ObjectId(),
+            "user_id": user_id,
+            "ciphertext": "encrypted-note",
+            "iv": "encrypted-iv-12",
+            "created_at": None,
+            "updated_at": None,
+        }
+        entry_cursor = MagicMock()
+        entry_cursor.sort.return_value = entry_cursor
+        entry_cursor.skip.return_value = entry_cursor
+        entry_cursor.limit.return_value = entry_cursor
+        entry_cursor.__aiter__.return_value = [note]
+
+        with (
+            patch(
+                "app.services.entry_service.note_collaborators_collection.find"
+            ) as find_collaborators,
+            patch(
+                "app.services.entry_service.entries_collection.count_documents",
+                new=AsyncMock(return_value=1),
+            ) as count_entries,
+            patch(
+                "app.services.entry_service.entries_collection.find",
+                return_value=entry_cursor,
+            ) as find_entries,
+        ):
+            result = await get_user_entries(user_id, owned_only=True)
+
+        find_collaborators.assert_not_called()
+        count_entries.assert_awaited_once_with({"user_id": user_id})
+        find_entries.assert_called_once_with({"user_id": user_id})
+        self.assertEqual(len(result["items"]), 1)
+        self.assertEqual(result["items"][0]["role"], "owner")
+
 
 if __name__ == "__main__":
     unittest.main()

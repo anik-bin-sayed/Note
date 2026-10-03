@@ -76,10 +76,17 @@ async def create_entry(
     return serialize_entry(entry)
 
 
-async def get_user_entries(user_id: str, page: int = 1, limit: int = 9):
+async def get_user_entries(
+    user_id: str,
+    page: int = 1,
+    limit: int = 9,
+    owned_only: bool = False,
+):
     skip = (page - 1) * limit
-    collaborator_cursor = note_collaborators_collection.find({"user_id": user_id})
-    collaborators = [collaborator async for collaborator in collaborator_cursor]
+    collaborators = []
+    if not owned_only:
+        collaborator_cursor = note_collaborators_collection.find({"user_id": user_id})
+        collaborators = [collaborator async for collaborator in collaborator_cursor]
     collaborators_by_note = {
         str(collaborator["note_id"]): collaborator for collaborator in collaborators
     }
