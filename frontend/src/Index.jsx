@@ -6,6 +6,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import NoteDetails from "./pages/NoteDetails";
 import PublicSharedNote from "./pages/PublicSharedNote";
+import Settings from "./pages/Settings";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -18,8 +19,12 @@ const Index = () => {
         <Route path="/" element={<Login />} />
       </Route>
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute requireVault={false} />}>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/notes" element={<Notes />} />
         <Route path="/notes/:id" element={<NoteDetails />} />

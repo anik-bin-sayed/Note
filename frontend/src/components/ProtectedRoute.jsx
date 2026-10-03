@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import Loader from "./Loader";
 import VaultGate from "./VaultGate";
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ requireVault = true }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
@@ -23,10 +23,12 @@ const ProtectedRoute = () => {
       />
     );
   }
-  return (
+  return requireVault ? (
     <VaultGate>
       <Outlet />
     </VaultGate>
+  ) : (
+    <Outlet />
   );
 };
 
