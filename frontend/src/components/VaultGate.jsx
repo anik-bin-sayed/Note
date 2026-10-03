@@ -6,15 +6,55 @@ import { noteApi } from "../lib/features/noteApi";
 import {
   createRecipientKeyPair,
   createVault,
+  hasVaultKey,
+  isVaultPinRequired,
+  saveDeviceVaultKey,
   setVaultKey,
   setVaultPrivateKey,
   unlockVault,
+  unlockVaultWithDeviceKey,
 } from "../lib/vaultCrypto";
+import { useAuth } from "../context/AuthContext";
 
 const MIN_PIN_LENGTH = 8;
 
+const getErrorMessage = (
+  error,
+  fallback = "Could not unlock or migrate the note vault. Please try again.",
+) => {
+  const detail = error?.response?.data?.detail ?? error?.data?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        const location = Array.isArray(item.loc) ? item.loc.join(".") : "";
+        return [location, item.msg].filter(Boolean).join(": ");
+      })
+      .join("; ");
+  }
+
+  if (typeof error?.error === "string") return error.error;
+  if (typeof error?.message === "string") return error.message;
+  return fallback;
+};
+
+const completeVaultUnlock = async (dispatch) => {
+  dispatch(noteApi.util.resetApiState());
+  const migration = dispatch(
+    noteApi.endpoints.migrateLegacyNotes.initiate(undefined, {
+      forceRefetch: true,
+    }),
+  );
+  try {
+    await migration.unwrap();
+  } finally {
+    migration.unsubscribe();
+  }
+};
+
 const VaultGate = ({ children }) => {
   const dispatch = useDispatch();
+  const { user } = useAuth();
   const [vault, setVault] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,13 +68,39 @@ const VaultGate = ({ children }) => {
 
     api
       .get("/api/vault")
-      .then(({ data }) => {
-        if (active) setVault(data);
+      .then(async ({ data }) => {
+        if (!active) return;
+        setVault(data);
+        if (!data.configured) return;
+
+        let restored = hasVaultKey();
+        if (!restored && !isVaultPinRequired(user.id)) {
+          try {
+            restored = await unlockVaultWithDeviceKey(user.id, data);
+          } catch {
+            restored = false;
+          }
+        }
+        if (restored) {
+          try {
+            await completeVaultUnlock(dispatch);
+            if (active) setUnlocked(true);
+          } catch (migrationError) {
+            if (active) {
+              setError(
+                `Vault loaded, but note migration failed: ${getErrorMessage(migrationError)}`,
+              );
+            }
+          }
+        }
       })
-      .catch(() => {
+      .catch((loadError) => {
         if (active)
           setError(
-            "Could not load your encryption vault. Reload to try again.",
+            `Could not load your encryption vault: ${getErrorMessage(
+              loadError,
+              "Check your connection and sign in again.",
+            )}`,
           );
       })
       .finally(() => {
@@ -44,7 +110,7 @@ const VaultGate = ({ children }) => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [dispatch, user.id]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -79,7 +145,10 @@ const VaultGate = ({ children }) => {
       }
 
       setVaultKey(key);
-  if (needsKeyPairMigration) {
+      if (!isVaultPinRequired(user.id)) {
+        await saveDeviceVaultKey(user.id, key);
+      }
+      if (needsKeyPairMigration) {
         const keyPair = await createRecipientKeyPair(key);
         await api.put("/api/vault/keys", {
           public_key: keyPair.public_key,
@@ -93,27 +162,12 @@ const VaultGate = ({ children }) => {
           private_key: keyPair.private_key,
         }));
       }
-      dispatch(noteApi.util.resetApiState());
-      const migration = dispatch(
-        noteApi.endpoints.migrateLegacyNotes.initiate(undefined, {
-          forceRefetch: true,
-        }),
-      );
-      try {
-        await migration.unwrap();
-      } finally {
-        migration.unsubscribe();
-      }
+      await completeVaultUnlock(dispatch);
       setUnlocked(true);
       setPin("");
       setConfirmation("");
     } catch (unlockError) {
-      setError(
-        unlockError?.response?.data?.detail ||
-          unlockError?.error ||
-          unlockError?.message ||
-          "Could not unlock or migrate the note vault. Please try again.",
-      );
+      setError(getErrorMessage(unlockError));
     } finally {
       setSaving(false);
     }

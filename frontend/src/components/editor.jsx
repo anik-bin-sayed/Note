@@ -5,15 +5,22 @@ import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 
-const editor = useEditor({
-  extensions: [
-    StarterKit,
-    TextStyle,
-    Color,
-    Highlight,
-    Link.configure({
-      openOnClick: false,
-    }),
-  ],
-  content: "",
-});
+const RichTextEditor = () => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TextStyle,
+      Color,
+      Highlight,
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
+    content: "",
+    immediatelyRender: false,
+  });
+
+  return <EditorContent editor={editor} />;
+};
+
+export default RichTextEditor;

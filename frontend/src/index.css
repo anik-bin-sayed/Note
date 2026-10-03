@@ -13,7 +13,9 @@ html {
 
 body {
   background: #f8fafc;
-  transition: background-color 180ms ease, color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 html[data-theme="dark"] {

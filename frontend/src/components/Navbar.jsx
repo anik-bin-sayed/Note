@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FiBookOpen,
   FiChevronDown,
@@ -14,7 +14,18 @@ import { useTheme } from "../context/ThemeContext";
 
 const Navbar = ({ user, logout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event) => {
+      if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () =>
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
@@ -43,6 +54,7 @@ const Navbar = ({ user, logout }) => {
         {/* User Section */}
         <div className="flex items-center gap-3">
           <div
+            ref={menuRef}
             className="relative"
             onMouseEnter={() => setMenuOpen(true)}
             onMouseLeave={() => setMenuOpen(false)}
@@ -59,8 +71,10 @@ const Navbar = ({ user, logout }) => {
               type="button"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
-              onFocus={() => setMenuOpen(true)}
+              onClick={() => setMenuOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown") setMenuOpen(true);
+              }}
               className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-2 py-1.5 text-left hover:bg-slate-100 sm:px-3"
             >
               {user?.picture ? (
@@ -93,7 +107,7 @@ const Navbar = ({ user, logout }) => {
               <div
                 role="menu"
                 aria-label="Account menu"
-                className="absolute right-0 top-full z-50 mt-1 w-64 border border-slate-200 bg-white p-2 shadow-xl"
+                className="absolute right-0 top-full z-50 w-64 border border-slate-200 bg-white p-2 shadow-xl"
               >
                 <Link
                   role="menuitem"

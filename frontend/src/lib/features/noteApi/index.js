@@ -12,9 +12,10 @@ import {
 const customError = (error) => ({
   error: {
     status: "CUSTOM_ERROR",
-    error:
-      error instanceof Error
-        ? error.message
+    error: error?.message
+      ? `${error.name ? `${error.name}: ` : ""}${error.message}`
+      : typeof error === "string"
+        ? error
         : "Could not process encrypted note data.",
   },
 });
@@ -72,13 +73,20 @@ const decryptEntries = (entries, baseQuery) =>
     entries.map(async (entry) => {
       try {
         return await decryptEntry(entry, baseQuery);
-      } catch (error) {
-        if (entry.role === "owner") throw error;
+      } catch {
+        if (entry.role !== "owner") {
+          return {
+            ...entry,
+            title: "Shared note unavailable",
+            text: "Could not decrypt this shared note. Ask the owner to resend the invitation.",
+            decryption_error: true,
+          };
+        }
 
         return {
           ...entry,
-          title: "Shared note unavailable",
-          text: "Could not decrypt this shared note. Ask the owner to resend the invitation.",
+          title: "Note unavailable",
+          text: "This note could not be decrypted. Check the vault key or restore it from a backup.",
           decryption_error: true,
         };
       }
@@ -96,7 +104,7 @@ const getAllNotes = async (
     const result = await baseQuery({
       url: "/entries",
       method: "GET",
-      params: { page: currentPage, limit: 100 },
+      params: { page: currentPage, limit: 100, owned_only: true },
     });
 
     if (result.error) return result;
@@ -192,7 +200,7 @@ export const noteApi = createApi({
         const result = await baseQuery({
           url: "/entries",
           method: "GET",
-          params: { page: 1, limit: 6 },
+          params: { page: 1, limit: 6, owned_only: true },
         });
 
         if (result.error) return result;

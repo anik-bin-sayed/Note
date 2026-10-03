@@ -16,7 +16,7 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
         >
           {/* Top */}
           <div className="mb-4 flex items-start justify-between gap-4">
-            <Link to={`/notes/${entry.id}`}>
+            {entry.decryption_error ? (
               <div className="flex min-w-0 items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                   <FiBookOpen />
@@ -28,7 +28,21 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
                   </h4>
                 </div>
               </div>
-            </Link>
+            ) : (
+              <Link to={`/notes/${entry.id}`}>
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                    <FiBookOpen />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h4 className="line-clamp-2 text-base font-bold leading-6 text-slate-900">
+                      {entry.title}
+                    </h4>
+                  </div>
+                </div>
+              </Link>
+            )}
             <div className="flex items-center gap-1">
               {entry.role === "owner" && (
                 <button
@@ -48,32 +62,41 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
                 </button>
               )}
 
-              <button
-                type="button"
-                aria-label={`Edit ${entry.title}`}
-                disabled={deleting}
-                className="
+              {!entry.decryption_error && (
+                <button
+                  type="button"
+                  aria-label={`Edit ${entry.title}`}
+                  disabled={deleting}
+                  className="
       shrink-0 cursor-pointer rounded-lg p-2
       text-slate-400 transition
       hover:bg-blue-50 hover:text-blue-500
       lg:opacity-0 lg:group-hover:opacity-100
       disabled:cursor-not-allowed
     "
-              >
-                <FiEdit3 />
-              </button>
+                >
+                  <FiEdit3 />
+                </button>
+              )}
             </div>
           </div>
-          <Link to={`/notes/${entry.id}`}>
-            {/* Text */}
-
+          {entry.decryption_error ? (
             <div
               className="line-clamp-6 whitespace-pre-wrap text-sm leading-6 text-slate-600"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(entry.text),
               }}
             />
-          </Link>
+          ) : (
+            <Link to={`/notes/${entry.id}`}>
+              <div
+                className="line-clamp-6 whitespace-pre-wrap text-sm leading-6 text-slate-600"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(entry.text),
+                }}
+              />
+            </Link>
+          )}
 
           {/* Footer */}
           <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">

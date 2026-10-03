@@ -2,6 +2,9 @@ import ToolbarButton from "./ToolbarButton";
 
 import {
   FiBookOpen,
+  FiAlignCenter,
+  FiAlignLeft,
+  FiAlignRight,
   FiCode,
   FiItalic,
   FiLink,
@@ -9,6 +12,7 @@ import {
   FiMinus,
   FiRotateCcw,
   FiRotateCw,
+  FiUnderline,
 } from "react-icons/fi";
 import ToolbarDivider from "./ToolbarDivider";
 import { EditorContent } from "@tiptap/react";
@@ -58,6 +62,15 @@ const Description = ({
             <FiItalic />
           </ToolbarButton>
 
+          {/* Underline */}
+          <ToolbarButton
+            title="Underline"
+            active={editor?.isActive("underline")}
+            onClick={() => editor?.chain().focus().toggleUnderline().run()}
+          >
+            <FiUnderline />
+          </ToolbarButton>
+
           {/* Strike */}
           <ToolbarButton
             title="Strike"
@@ -89,6 +102,42 @@ const Description = ({
             }
           >
             <span className="font-bold">H2</span>
+          </ToolbarButton>
+
+          <ToolbarDivider />
+
+          {/* Paragraph alignment */}
+          <ToolbarButton
+            title="Align Left"
+            active={
+              editor?.isActive("paragraph", { textAlign: "left" }) ||
+              editor?.isActive("heading", { textAlign: "left" })
+            }
+            onClick={() => editor?.chain().focus().setTextAlign("left").run()}
+          >
+            <FiAlignLeft />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Align Center"
+            active={
+              editor?.isActive("paragraph", { textAlign: "center" }) ||
+              editor?.isActive("heading", { textAlign: "center" })
+            }
+            onClick={() => editor?.chain().focus().setTextAlign("center").run()}
+          >
+            <FiAlignCenter />
+          </ToolbarButton>
+
+          <ToolbarButton
+            title="Align Right"
+            active={
+              editor?.isActive("paragraph", { textAlign: "right" }) ||
+              editor?.isActive("heading", { textAlign: "right" })
+            }
+            onClick={() => editor?.chain().focus().setTextAlign("right").run()}
+          >
+            <FiAlignRight />
           </ToolbarButton>
 
           <ToolbarDivider />

@@ -5,6 +5,23 @@ const decoder = new TextDecoder();
 
 let activeKey = null;
 let activePrivateKey = null;
+const DEVICE_VAULT_DB = "note-device-vault";
+const DEVICE_VAULT_STORE = "keys";
+
+const openDeviceVaultDatabase = () =>
+  new Promise((resolve, reject) => {
+    if (!globalThis.indexedDB) {
+      reject(new Error("This browser cannot store a device vault key."));
+      return;
+    }
+
+    const request = globalThis.indexedDB.open(DEVICE_VAULT_DB, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(DEVICE_VAULT_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
 
 const bytesToBase64 = (bytes) => {
   let binary = "";
@@ -182,9 +199,96 @@ export const setVaultKey = (key) => {
   activeKey = key;
 };
 
+export const hasVaultKey = () => Boolean(activeKey);
+
 export const clearVaultKey = () => {
   activeKey = null;
   activePrivateKey = null;
+};
+
+export const isVaultPinRequired = (userId) => {
+  try {
+    return (
+      globalThis.localStorage.getItem(`note-pin-required:${userId}`) !== "false"
+    );
+  } catch {
+    return true;
+  }
+};
+
+export const setVaultPinRequired = (userId, required) => {
+  globalThis.localStorage.setItem(
+    `note-pin-required:${userId}`,
+    String(required),
+  );
+};
+
+export const saveDeviceVaultKey = async (userId, key = activeKey) => {
+  if (!userId || !key)
+    throw new Error("Unlock the vault before saving its key.");
+
+  const database = await openDeviceVaultDatabase();
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction(DEVICE_VAULT_STORE, "readwrite");
+    transaction.objectStore(DEVICE_VAULT_STORE).put(key, userId);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+  database.close();
+};
+
+export const removeDeviceVaultKey = async (userId) => {
+  if (!userId) return;
+
+  const database = await openDeviceVaultDatabase();
+  await new Promise((resolve, reject) => {
+    const transaction = database.transaction(DEVICE_VAULT_STORE, "readwrite");
+    transaction.objectStore(DEVICE_VAULT_STORE).delete(userId);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+  database.close();
+};
+
+export const unlockVaultWithDeviceKey = async (userId, metadata) => {
+  const database = await openDeviceVaultDatabase();
+  const key = await new Promise((resolve, reject) => {
+    const transaction = database.transaction(DEVICE_VAULT_STORE, "readonly");
+    const request = transaction.objectStore(DEVICE_VAULT_STORE).get(userId);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => database.close();
+    transaction.onerror = () => reject(transaction.error);
+  });
+
+  if (!key) {
+    database.close();
+    return false;
+  }
+
+  try {
+    const verifier = await decryptText(key, metadata.verifier);
+    if (verifier !== VERIFIER_TEXT) return false;
+
+    activeKey = key;
+    activePrivateKey = null;
+    if (metadata.private_key && metadata.public_key) {
+      const encodedPrivateKey = await decryptText(key, metadata.private_key);
+      activePrivateKey = await globalThis.crypto.subtle.importKey(
+        "pkcs8",
+        base64ToBytes(encodedPrivateKey),
+        { name: "RSA-OAEP", hash: "SHA-256" },
+        false,
+        ["decrypt"],
+      );
+    }
+    return true;
+  } catch {
+    clearVaultKey();
+    return false;
+  }
 };
 
 export const setVaultPrivateKey = (key) => {

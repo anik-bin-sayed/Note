@@ -4,6 +4,8 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
+import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
 
 const useTiptapEditor = ({ setText, setError }) => {
   const editor = useEditor({
@@ -14,6 +16,10 @@ const useTiptapEditor = ({ setText, setError }) => {
       Highlight.configure({
         multicolor: true,
       }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      Underline,
       Link.configure({
         openOnClick: false,
         autolink: true,

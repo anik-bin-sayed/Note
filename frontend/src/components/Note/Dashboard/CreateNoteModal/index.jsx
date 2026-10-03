@@ -1,7 +1,7 @@
 "use client";
 
 // react icons
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FiCheck, FiFileText, FiLoader, FiX } from "react-icons/fi";
 
 // redux toolkit query
@@ -23,12 +23,6 @@ const CreateNoteModal = ({ setShowAddModal }) => {
     setText,
     setError,
   });
-
-  useEffect(() => {
-    return () => {
-      editor?.destroy();
-    };
-  }, [editor]);
 
   const handleCreateEntry = async (event) => {
     event.preventDefault();

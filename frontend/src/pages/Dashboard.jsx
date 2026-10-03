@@ -21,6 +21,15 @@ import LoadingNote from "../components/Note/LoadingNote";
 import Header from "../components/Note/Dashboard/Header";
 import CreateNoteModal from "../components/Note/Dashboard/CreateNoteModal";
 
+const EMPTY_ENTRIES = [];
+const getNotesErrorMessage = (error) => {
+  if (typeof error?.data?.detail === "string") return error.data.detail;
+  if (typeof error?.data === "string") return error.data;
+  if (typeof error?.error === "string") return error.error;
+  if (error?.status) return `Could not load notes (HTTP ${error.status}).`;
+  return "Could not load your notes. Try again.";
+};
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
 
@@ -31,10 +40,18 @@ const Dashboard = () => {
 
   const page = Number(searchParams.get("page")) || 1;
 
-  const { data, isLoading, refetch, isError } = useGetDashboardNotesQuery();
+  const {
+    data,
+    isLoading,
+    refetch,
+    isError,
+    error: notesError,
+  } = useGetDashboardNotesQuery();
   const [deleteEntry, { isLoading: deleting }] = useDeleteEntryMutation();
 
-  const entries = data?.items;
+  console.log(data, isLoading, isError, notesError);
+
+  const entries = data?.items ?? EMPTY_ENTRIES;
 
   const handleDeleteNote = async (id) => {
     const confirmed = window.confirm(
@@ -68,7 +85,12 @@ const Dashboard = () => {
         <Header user={user} setShowAddModal={setShowAddModal} />
 
         {/* Error */}
-        {isError && <Error error={isError} fetchEntries={refetch} />}
+        {isError && (
+          <Error
+            error={getNotesErrorMessage(notesError)}
+            fetchEntries={refetch}
+          />
+        )}
 
         {/* Stats */}
         <Stats entries={entries} search={search} setSearch={setSearch} />
@@ -77,13 +99,13 @@ const Dashboard = () => {
         {isLoading && <LoadingNote />}
 
         {/* Empty */}
-        {!isLoading && entries.length === 0 && (
+        {!isLoading && !isError && entries.length === 0 && (
           <Empty search={search} setShowAddModal={setShowAddModal} />
         )}
 
         {/* Entries */}
         <div className="border border-gray-300 py-4 px-2 lg:px-8 rounded-xl bg-gray-100">
-          {!isLoading && entries.length > 0 && (
+          {!isLoading && !isError && entries.length > 0 && (
             <ListEntry
               entries={entries}
               handleDeleteNote={handleDeleteNote}

@@ -77,7 +77,8 @@ const NotificationCenter = () => {
                         {notification.message}
                       </span>
                       <span className="mt-1 block text-xs text-slate-500">
-                        {notification.role} · {new Date(notification.created_at).toLocaleString()}
+                        {notification.role} ·{" "}
+                        {new Date(notification.created_at).toLocaleString()}
                       </span>
                     </span>
                     {!notification.read_at && (
