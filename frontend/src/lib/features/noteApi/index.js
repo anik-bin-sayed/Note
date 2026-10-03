@@ -22,7 +22,7 @@ const customError = (error) => ({
 const decryptEntry = async (entry, baseQuery) => {
   let encryptedEntry = entry;
 
-  if (typeof entry.legacy_title === "string") {
+  if (entry.role === "owner" && typeof entry.legacy_title === "string") {
     const encrypted = await encryptNote({
       title: entry.legacy_title,
       text: entry.legacy_text,
@@ -41,6 +41,7 @@ const decryptEntry = async (entry, baseQuery) => {
 
     encryptedEntry = migration.data;
   } else if (
+    entry.role === "owner" &&
     entry.ciphertext &&
     !entry.wrapped_key &&
     !entry.recipient_key_ciphertext
@@ -67,7 +68,22 @@ const decryptEntry = async (entry, baseQuery) => {
 };
 
 const decryptEntries = (entries, baseQuery) =>
-  Promise.all(entries.map((entry) => decryptEntry(entry, baseQuery)));
+  Promise.all(
+    entries.map(async (entry) => {
+      try {
+        return await decryptEntry(entry, baseQuery);
+      } catch (error) {
+        if (entry.role === "owner") throw error;
+
+        return {
+          ...entry,
+          title: "Shared note unavailable",
+          text: "Could not decrypt this shared note. Ask the owner to resend the invitation.",
+          decryption_error: true,
+        };
+      }
+    }),
+  );
 
 const getAllNotes = async (
   { page = 1, limit = 9, search = "" } = {},
@@ -132,8 +148,9 @@ const migrateLegacyNotes = async (baseQuery) => {
     totalPages = result.data.total_pages;
     const legacyEntries = result.data.items.filter(
       (entry) =>
-        typeof entry.legacy_title === "string" ||
-        (entry.ciphertext && !entry.wrapped_key && !entry.recipient_key_ciphertext),
+        entry.role === "owner" &&
+        (typeof entry.legacy_title === "string" ||
+          (entry.ciphertext && !entry.wrapped_key)),
     );
 
     try {
