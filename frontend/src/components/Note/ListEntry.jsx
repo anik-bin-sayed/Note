@@ -30,21 +30,23 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
               </div>
             </Link>
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label={`Delete ${entry.title}`}
-                onClick={() => handleDeleteNote(entry?.id)}
-                disabled={deleting}
-                className="
+              {entry.role === "owner" && (
+                <button
+                  type="button"
+                  aria-label={`Delete ${entry.title}`}
+                  onClick={() => handleDeleteNote(entry?.id)}
+                  disabled={deleting}
+                  className="
       shrink-0 cursor-pointer rounded-lg p-2
       text-slate-400 transition
       hover:bg-red-50 hover:text-red-500
       lg:opacity-0 lg:group-hover:opacity-100
       disabled:cursor-not-allowed
     "
-              >
-                <FiTrash2 />
-              </button>
+                >
+                  <FiTrash2 />
+                </button>
+              )}
 
               <button
                 type="button"
@@ -83,7 +85,7 @@ const ListEntry = ({ entries, handleDeleteNote, deleting }) => {
             </p>
 
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-500">
-              Note
+              {entry.role === "owner" ? "Note" : `Shared · ${entry.role}`}
             </span>
           </div>
         </article>

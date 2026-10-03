@@ -78,7 +78,19 @@ async def create_entry(
 
 async def get_user_entries(user_id: str, page: int = 1, limit: int = 9):
     skip = (page - 1) * limit
+    collaborator_cursor = note_collaborators_collection.find({"user_id": user_id})
+    collaborators = [collaborator async for collaborator in collaborator_cursor]
+    collaborators_by_note = {
+        str(collaborator["note_id"]): collaborator for collaborator in collaborators
+    }
     query = {"user_id": user_id}
+    if collaborators:
+        query = {
+            "$or": [
+                {"user_id": user_id},
+                {"_id": {"$in": [item["note_id"] for item in collaborators]}},
+            ]
+        }
 
     total = await entries_collection.count_documents(query)
 
@@ -89,7 +101,16 @@ async def get_user_entries(user_id: str, page: int = 1, limit: int = 9):
     entries = []
 
     async for entry in cursor:
-        entries.append(serialize_entry(entry))
+        collaborator = collaborators_by_note.get(str(entry["_id"]))
+        if entry["user_id"] == user_id or not collaborator:
+            entries.append(serialize_entry(entry))
+            continue
+
+        serialized = serialize_entry(entry, collaborator["role"])
+        serialized.pop("wrapped_key", None)
+        serialized.pop("key_iv", None)
+        serialized["recipient_key_ciphertext"] = collaborator.get("key_envelope")
+        entries.append(serialized)
 
     total_pages = (total + limit - 1) // limit
 
@@ -197,7 +218,5 @@ async def update_entry(
     if current["role"] != "owner":
         serialized.pop("wrapped_key", None)
         serialized.pop("key_iv", None)
-        serialized["recipient_key_ciphertext"] = current.get(
-            "recipient_key_ciphertext"
-        )
+        serialized["recipient_key_ciphertext"] = current.get("recipient_key_ciphertext")
     return serialized

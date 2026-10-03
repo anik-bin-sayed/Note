@@ -1,8 +1,9 @@
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from bson import ObjectId
 
+from app.services.entry_service import get_user_entries
 from app.services.sharing_service import add_collaborator
 
 
@@ -59,6 +60,57 @@ class CollaboratorNotificationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(notification["role"], "viewer")
         self.assertIsNone(notification["read_at"])
         self.assertNotIn("key_envelope", notification)
+
+    async def test_collaborator_listing_uses_recipient_key_only(self):
+        user_id = str(ObjectId())
+        note_id = ObjectId()
+        note = {
+            "_id": note_id,
+            "user_id": str(ObjectId()),
+            "ciphertext": "encrypted-note",
+            "iv": "123456789012",
+            "wrapped_key": "owner-wrapped-key",
+            "key_iv": "owner-key-iv",
+            "created_at": None,
+            "updated_at": None,
+        }
+        collaborator_cursor = MagicMock()
+        collaborator_cursor.__aiter__.return_value = [
+            {
+                "note_id": note_id,
+                "role": "viewer",
+                "key_envelope": "recipient-key-envelope",
+            }
+        ]
+        entry_cursor = MagicMock()
+        entry_cursor.sort.return_value = entry_cursor
+        entry_cursor.skip.return_value = entry_cursor
+        entry_cursor.limit.return_value = entry_cursor
+        entry_cursor.__aiter__.return_value = [note]
+
+        with (
+            patch(
+                "app.services.entry_service.note_collaborators_collection.find",
+                return_value=collaborator_cursor,
+            ),
+            patch(
+                "app.services.entry_service.entries_collection.count_documents",
+                new=AsyncMock(return_value=1),
+            ),
+            patch(
+                "app.services.entry_service.entries_collection.find",
+                return_value=entry_cursor,
+            ),
+        ):
+            result = await get_user_entries(user_id)
+
+        shared_note = result["items"][0]
+        self.assertEqual(shared_note["role"], "viewer")
+        self.assertEqual(
+            shared_note["recipient_key_ciphertext"], "recipient-key-envelope"
+        )
+        self.assertNotIn("wrapped_key", shared_note)
+        self.assertNotIn("key_iv", shared_note)
 
 
 if __name__ == "__main__":
