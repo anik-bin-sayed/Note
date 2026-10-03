@@ -133,7 +133,7 @@ const migrateLegacyNotes = async (baseQuery) => {
     const legacyEntries = result.data.items.filter(
       (entry) =>
         typeof entry.legacy_title === "string" ||
-        (entry.ciphertext && !entry.wrapped_key),
+        (entry.ciphertext && !entry.wrapped_key && !entry.recipient_key_ciphertext),
     );
 
     try {
@@ -261,8 +261,8 @@ export const noteApi = createApi({
             : entry?.recipient_key_ciphertext
               ? await getRecipientNoteKey(entry)
               : entry?.wrapped_key
-              ? await getNoteKey(entry)
-              : null;
+                ? await getNoteKey(entry)
+                : null;
           const encrypted = await encryptNote(note, key);
           return baseQuery({
             url: `/entries/${id}`,
