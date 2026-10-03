@@ -3,11 +3,30 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from bson import ObjectId
 
+from app.schemas.vault import VaultKeySetup
 from app.services.entry_service import get_user_entries
 from app.services.sharing_service import add_collaborator
 
 
 class CollaboratorNotificationTests(unittest.IsolatedAsyncioTestCase):
+    def test_vault_key_schema_accepts_exported_public_jwk(self):
+        result = VaultKeySetup.model_validate(
+            {
+                "public_key": {
+                    "kty": "RSA",
+                    "n": "modulus",
+                    "e": "AQAB",
+                    "alg": "RSA-OAEP-256",
+                    "key_ops": ["encrypt"],
+                    "ext": True,
+                },
+                "private_key": {"ciphertext": "encrypted", "iv": "1234567890123456"},
+            }
+        )
+
+        self.assertEqual(result.public_key["key_ops"], ["encrypt"])
+        self.assertIs(result.public_key["ext"], True)
+
     async def test_invite_creates_recipient_notification_without_key(self):
         owner_id = str(ObjectId())
         recipient_id = ObjectId()

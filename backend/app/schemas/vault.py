@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -10,10 +12,10 @@ class VaultSetup(BaseModel):
     salt: str = Field(..., min_length=24, max_length=24)
     iterations: int = Field(..., ge=100_000, le=1_000_000)
     verifier: VaultVerifier
-    public_key: dict[str, str] | None = None
+    public_key: dict[str, Any] | None = None
     private_key: VaultVerifier | None = None
 
 
 class VaultKeySetup(BaseModel):
-    public_key: dict[str, str]
+    public_key: dict[str, Any]
     private_key: VaultVerifier
