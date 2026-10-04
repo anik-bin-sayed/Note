@@ -33,6 +33,26 @@ html[data-theme="dark"] .application-layout {
   min-height: calc(100vh - 72px);
 }
 
+.application-layout.is-spreadsheet-focus {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.application-layout-body.is-spreadsheet-focus-body,
+.application-layout-main.is-spreadsheet-focus-main,
+.application-route-content.is-spreadsheet-focus-content,
+.application-route-content.is-spreadsheet-focus-content > .spreadsheet-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+.application-layout.is-spreadsheet-focus .spreadsheet-grid-viewport {
+  min-height: 0;
+  max-height: none;
+}
+
 .application-sidebar {
   position: sticky;
   top: var(--application-top);
@@ -45,6 +65,50 @@ html[data-theme="dark"] .application-layout {
   border-right: 1px solid var(--app-nav-border);
   background: var(--app-nav-bg);
   padding: 18px 12px 14px;
+}
+
+.application-sidebar-toggle {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 13px auto;
+  border: 1px solid var(--app-nav-border);
+  border-radius: 5px;
+  background: var(--app-nav-bg);
+  color: var(--app-nav-muted);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.application-sidebar-toggle:hover {
+  background: var(--app-nav-hover);
+  color: var(--app-nav-text);
+}
+
+.application-sidebar.is-collapsed {
+  width: 64px;
+  flex-basis: 64px;
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.application-sidebar.is-collapsed .application-sidebar-toggle {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.application-sidebar.is-collapsed .application-sidebar-label,
+.application-sidebar.is-collapsed .application-nav-item span {
+  display: none;
+}
+
+.application-sidebar.is-collapsed .application-nav-item {
+  justify-content: center;
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .application-sidebar-nav {
@@ -140,6 +204,30 @@ html[data-theme="dark"] .application-layout {
     box-shadow: 12px 0 28px rgb(8 22 13 / 14%);
     transform: translateX(-105%);
     transition: transform 180ms ease;
+  }
+
+  .application-sidebar-toggle {
+    display: none;
+  }
+
+  .application-sidebar.is-collapsed {
+    width: min(280px, calc(100vw - 44px));
+    flex-basis: auto;
+    padding: 18px 12px 14px;
+  }
+
+  .application-sidebar.is-collapsed .application-sidebar-label {
+    display: block;
+  }
+
+  .application-sidebar.is-collapsed .application-nav-item {
+    justify-content: flex-start;
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
+  .application-sidebar.is-collapsed .application-nav-item span {
+    display: inline;
   }
 
   .application-sidebar.is-open {

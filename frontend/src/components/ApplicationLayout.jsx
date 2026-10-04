@@ -19,26 +19,36 @@ const ApplicationLayout = () => {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const authenticated = Boolean(user);
+  const spreadsheetFocusMode = /^\/spreadsheets\/[^/]+\/?$/.test(pathname);
 
   return (
     <SpreadsheetProvider>
       <div
-        className="application-layout"
+        className={`application-layout ${spreadsheetFocusMode ? "is-spreadsheet-focus" : ""}`}
         onKeyDown={(event) => {
           if (event.key === "Escape") setMobileOpen(false);
         }}
       >
-        {authenticated && <Navbar user={user} logout={logout} />}
+        {!spreadsheetFocusMode && authenticated && (
+          <Navbar user={user} logout={logout} />
+        )}
 
         <div
-          className={`application-layout-body ${authenticated ? "has-navbar" : ""}`}
+          className={`application-layout-body ${authenticated && !spreadsheetFocusMode ? "has-navbar" : ""} ${spreadsheetFocusMode ? "is-spreadsheet-focus-body" : ""}`}
         >
-          <Sidebar
-            mobileOpen={mobileOpen}
-            onNavigate={() => setMobileOpen(false)}
-          />
-          {mobileOpen && (
+          {!spreadsheetFocusMode && (
+            <Sidebar
+              mobileOpen={mobileOpen}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={() =>
+                setSidebarCollapsed((collapsed) => !collapsed)
+              }
+              onNavigate={() => setMobileOpen(false)}
+            />
+          )}
+          {!spreadsheetFocusMode && mobileOpen && (
             <button
               type="button"
               className="application-sidebar-backdrop"
@@ -47,20 +57,28 @@ const ApplicationLayout = () => {
             />
           )}
 
-          <div className="application-layout-main">
-            <div className="application-mobile-bar">
-              <button
-                type="button"
-                className="application-mobile-menu-button"
-                aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
-                aria-expanded={mobileOpen}
-                onClick={() => setMobileOpen((open) => !open)}
-              >
-                {mobileOpen ? <FiX /> : <FiMenu />}
-              </button>
-              <span>{getPageTitle(pathname)}</span>
-            </div>
-            <div className="application-route-content">
+          <div
+            className={`application-layout-main ${spreadsheetFocusMode ? "is-spreadsheet-focus-main" : ""}`}
+          >
+            {!spreadsheetFocusMode && (
+              <div className="application-mobile-bar">
+                <button
+                  type="button"
+                  className="application-mobile-menu-button"
+                  aria-label={
+                    mobileOpen ? "Close navigation" : "Open navigation"
+                  }
+                  aria-expanded={mobileOpen}
+                  onClick={() => setMobileOpen((open) => !open)}
+                >
+                  {mobileOpen ? <FiX /> : <FiMenu />}
+                </button>
+                <span>{getPageTitle(pathname)}</span>
+              </div>
+            )}
+            <div
+              className={`application-route-content ${spreadsheetFocusMode ? "is-spreadsheet-focus-content" : ""}`}
+            >
               <Outlet />
             </div>
           </div>

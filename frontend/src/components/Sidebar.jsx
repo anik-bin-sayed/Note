@@ -1,6 +1,8 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   FiBookOpen,
+  FiChevronLeft,
+  FiChevronRight,
   FiClock,
   FiGrid,
   FiHome,
@@ -8,7 +10,7 @@ import {
   FiStar,
 } from "react-icons/fi";
 
-const Sidebar = ({ mobileOpen, onNavigate }) => {
+const Sidebar = ({ mobileOpen, collapsed, onToggleCollapse, onNavigate }) => {
   const { pathname, search } = useLocation();
   const filter = new URLSearchParams(search).get("filter");
   const spreadsheetRoute = pathname.startsWith("/spreadsheets");
@@ -26,13 +28,30 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
 
   return (
     <aside
-      className={`application-sidebar ${mobileOpen ? "is-open" : ""}`}
+      id="workspace-sidebar"
+      className={`application-sidebar ${mobileOpen ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}
       aria-label="Workspace navigation"
     >
+      <button
+        type="button"
+        className="application-sidebar-toggle"
+        onClick={onToggleCollapse}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!collapsed}
+        aria-controls="workspace-sidebar"
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {collapsed ? (
+          <FiChevronRight aria-hidden="true" />
+        ) : (
+          <FiChevronLeft aria-hidden="true" />
+        )}
+      </button>
       <nav className="application-sidebar-nav">
         <NavLink
           to="/dashboard"
           className={navItemClass(homeActive)}
+          title="Home"
           aria-current={homeActive ? "page" : undefined}
           onClick={onNavigate}
         >
@@ -43,6 +62,7 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
         <NavLink
           to="/notes"
           className={navItemClass(notesActive)}
+          title="Notes"
           aria-current={notesActive ? "page" : undefined}
           onClick={onNavigate}
         >
@@ -51,6 +71,7 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
         <NavLink
           to="/spreadsheets"
           className={navItemClass(spreadsheetsActive)}
+          title="Spreadsheets"
           aria-current={spreadsheetsActive ? "page" : undefined}
           onClick={onNavigate}
         >
@@ -61,6 +82,7 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
         <NavLink
           to="/spreadsheets?filter=recent"
           className={navItemClass(recentActive)}
+          title="Recent"
           aria-current={recentActive ? "page" : undefined}
           onClick={onNavigate}
         >
@@ -69,6 +91,7 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
         <NavLink
           to="/spreadsheets?filter=favorites"
           className={navItemClass(favoritesActive)}
+          title="Favorites"
           aria-current={favoritesActive ? "page" : undefined}
           onClick={onNavigate}
         >
@@ -80,6 +103,7 @@ const Sidebar = ({ mobileOpen, onNavigate }) => {
         <NavLink
           to="/settings"
           className={navItemClass(settingsActive)}
+          title="Settings"
           aria-current={settingsActive ? "page" : undefined}
           onClick={onNavigate}
         >
